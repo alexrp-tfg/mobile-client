@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from '@lynx-js/react';
+import {
+  runOnMainThread,
+  useCallback,
+  useEffect,
+  useLynxGlobalEventListener,
+  useState,
+} from '@lynx-js/react';
 
 import './App.css';
-
-import arrow from './assets/arrow.png';
-import lynxLogo from './assets/lynx-logo.png';
-import reactLynxLogo from './assets/react-logo.png';
+import { useNavigate } from 'react-router';
+import type { NativeModules } from '@lynx-js/types';
 
 interface GlobalProps {
   safeAreaTop: number;
@@ -13,10 +17,10 @@ interface GlobalProps {
   safeAreaRight: number;
 }
 
-
 export function App() {
   const [alterLogo, setAlterLogo] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const nav = useNavigate();
 
   useEffect(() => {
     console.info('Hello, ReactLynx');
@@ -31,70 +35,68 @@ export function App() {
     );
     console.log(lynx.__globalProps);
     setImages(NativeModules.NativeLocalStorageModule.getImages());
+
+    NativeModules.NativeLocalStorageModule.registerBackButtonListener(() => {
+      console.log('Back button pressed');
+    });
   }, [lynx]);
+
+  useLynxGlobalEventListener("backButtonPressed", () => {
+    console.log('Back button pressed from global event listener');
+    nav(-1);
+  })
 
   const onTap = useCallback(() => {
     'background only';
     console.log(lynx.__globalProps);
     setAlterLogo(!alterLogo);
+    nav('/test');
   }, [alterLogo]);
 
   console.log('Info');
 
   return (
     <>
-      <view className="Background" />
-      <view className="App" style={{ paddingTop: (lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? 0 }}>
-        <view
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          }}
+      <view
+        className="App"
+        style={{
+          paddingTop:
+            (lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? '0px',
+        }}
+      >
+        <list
+          list-type="flow"
+          column-count={2}
+          scroll-orientation="vertical"
+          style={{ width: '100%', height: '100%' }}
         >
-          <list
-            list-type='waterfall'
-            column-count={2}
-            style={{
-              zIndex: 1,
-              flexGrow: 1
-            }}
-          >
-            <list-item item-key='start'>
-              <text className="Title" bindtap={onTap}>
-                Images from device:
-              </text>
-            </list-item>
-            {images.length > 0 &&
-              images.map((image, index) => (
-                <list-item item-key={'image-' + index} key={'image-' + index}>
-                  <image
-                    src={image}
-                    bindtap={onTap}
-                    placeholder="Loading image..."
-                    style={{ width: '200px', height: '200px' }}
-                  />
-                </list-item>
-              ))}
-            <list-item item-key='end'>
-              <text className="Title" item-key="end">End of the images</text>
-            </list-item>
-          </list>
-          <view
-            style={{
-              backgroundColor: 'white',
-              color: 'black',
-              flexShrink: 0,
-              height: '200px',
-              width: '100%',
-              marginBottom: '20px',
-            }}
-            bindtap={onTap}
-          >
-            <text style={{color: 'black'}}>Button</text>
-          </view>
-        </view>
+          <list-item item-key="start">
+            <text className="Title" bindtap={onTap}>
+              Images from device:
+            </text>
+          </list-item>
+          {images.length > 0 &&
+            images.map((image, index) => (
+              <list-item
+                item-key={'image-' + index}
+                key={'image-' + index}
+                style={{ width: '100%', border: '1px solid white' }}
+              >
+                <image
+                  src={image}
+                  bindtap={onTap}
+                  placeholder="Loading image..."
+                  auto-size={true}
+                  mode="aspectFill"
+                />
+              </list-item>
+            ))}
+          <list-item item-key="end">
+            <text className="Title" item-key="end">
+              End of the images
+            </text>
+          </list-item>
+        </list>
       </view>
     </>
   );
