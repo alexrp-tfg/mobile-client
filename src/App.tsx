@@ -20,6 +20,7 @@ interface GlobalProps {
 export function App() {
   const [alterLogo, setAlterLogo] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [backButtonPressed, setBackButtonPressed] = useState(false);
   const nav = useNavigate();
 
   useEffect(() => {
@@ -41,10 +42,11 @@ export function App() {
     });
   }, [lynx]);
 
-  useLynxGlobalEventListener("backButtonPressed", () => {
+  useLynxGlobalEventListener('backButtonPressed', () => {
     console.log('Back button pressed from global event listener');
+    setBackButtonPressed(true);
     nav(-1);
-  })
+  });
 
   const onTap = useCallback(() => {
     'background only';
@@ -73,6 +75,11 @@ export function App() {
           <list-item item-key="start">
             <text className="Title" bindtap={onTap}>
               Images from device:
+            </text>
+          </list-item>
+          <list-item item-key="backbutton">
+            <text className="Tile">
+              Back button pressed: {backButtonPressed ? 'Yes' : 'No'}
             </text>
           </list-item>
           {images.length > 0 &&
