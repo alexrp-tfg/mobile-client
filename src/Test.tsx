@@ -1,32 +1,41 @@
-import { useLynxGlobalEventListener, useState } from '@lynx-js/react';
 import type { GlobalProps } from '@lynx-js/types';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
+import './Test.css'
 
 export function Test() {
   const nav = useNavigate();
-  const [backButtonPressed, setBackButtonPressed] = useState(false);
+  const location = useLocation();
 
-  useLynxGlobalEventListener('backButtonPressed', () => {
-    console.log('Back button pressed from global event listener for the test component');
-    setBackButtonPressed(true);
-    nav(-1);
-  });
+  const imageUrl = location.state?.imageUrl;
   return (
     <>
       <view
         bindtap={() => {
-          nav(-1);
+          nav('/');
         }}
         style={{
           width: '100%',
-          height: '100%',
+          height: '50%',
           color: 'white',
-          paddingTop:
-            (lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? '0px',
+          paddingTop: (lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? 0,
         }}
       >
-        <text>Back button pressed {backButtonPressed ? 'Yes' : 'No'}</text>
+        <text>Back button pressed no</text>
+        <image
+          src={imageUrl}
+          auto-size={true}
+          mode="aspectFill"
+          placeholder="Loading image..."
+        ></image>
       </view>
+      <input 
+        className="input-box"
+        text-color="#000000"
+        placeholder='Type something...'
+        bindinput={(e: any) => {
+          console.log('Input event:', e);
+        }}
+      />
     </>
   );
 }

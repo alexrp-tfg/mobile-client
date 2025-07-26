@@ -42,17 +42,12 @@ export function App() {
     });
   }, [lynx]);
 
-  useLynxGlobalEventListener('backButtonPressed', () => {
-    console.log('Back button pressed from global event listener');
-    setBackButtonPressed(true);
-    nav(-1);
-  });
 
-  const onTap = useCallback(() => {
+  const onTap = useCallback((imageUrl: string) => {
     'background only';
     console.log(lynx.__globalProps);
     setAlterLogo(!alterLogo);
-    nav('/test');
+    nav('/test', { state: { imageUrl}});
   }, [alterLogo]);
 
   console.log('Info');
@@ -63,7 +58,7 @@ export function App() {
         className="App"
         style={{
           paddingTop:
-            (lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? '0px',
+            (lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? 0,
         }}
       >
         <list
@@ -73,7 +68,7 @@ export function App() {
           style={{ width: '100%', height: '100%' }}
         >
           <list-item item-key="start">
-            <text className="Title" bindtap={onTap}>
+            <text className="Title" bindtap={() => setAlterLogo(!alterLogo)}>
               Images from device:
             </text>
           </list-item>
@@ -91,7 +86,7 @@ export function App() {
               >
                 <image
                   src={image}
-                  bindtap={onTap}
+                  bindtap={() => onTap(image)}
                   placeholder="Loading image..."
                   auto-size={true}
                   mode="aspectFill"
