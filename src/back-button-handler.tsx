@@ -1,14 +1,17 @@
 import { useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useLynxGlobalEventListener } from '@lynx-js/react';
 
 export function BackButtonHandler() {
   const nav = useNavigate();
+  const location = useLocation();
+
   const handleBackButton = useCallback(() => {
+    if (location.pathname === '/') NativeModules.NativeLocalStorageModule.endActivity();
     nav(-1);
-    console.log('Back button pressed, navigating back');
-    console.log(nav)
   }, [nav]);
+
   useLynxGlobalEventListener('backButtonPressed', handleBackButton);
+
   return null;
 }

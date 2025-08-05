@@ -4,7 +4,6 @@ declare let NativeModules: {
     getStorageItem(key: string): string | null;
     clearStorage(): void;
     getImages(): Array<string>;
-    registerBackButtonListener(listener: () => void): void;
-    unregisterBackButtonListener(): void;
+    endActivity(): void;
   };
 };

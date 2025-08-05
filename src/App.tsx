@@ -36,10 +36,6 @@ export function App() {
     );
     console.log(lynx.__globalProps);
     setImages(NativeModules.NativeLocalStorageModule.getImages());
-
-    NativeModules.NativeLocalStorageModule.registerBackButtonListener(() => {
-      console.log('Back button pressed');
-    });
   }, [lynx]);
 
 
