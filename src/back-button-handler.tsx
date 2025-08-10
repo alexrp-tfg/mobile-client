@@ -7,7 +7,8 @@ export function BackButtonHandler() {
   const location = useLocation();
 
   const handleBackButton = useCallback(() => {
-    if (location.pathname === '/') NativeModules.NativeLocalStorageModule.endActivity();
+    if (location.pathname === '/')
+      NativeModules.NativeLocalStorageModule.endActivity();
     nav(-1);
   }, [nav]);
 

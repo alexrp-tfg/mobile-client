@@ -1,13 +1,11 @@
 .input-box {
   display: flex;
   align-items: flex-start;
-  margin: 0% 5% 5% 5%;
   padding-left: 10px;
   background: white;
   border-width: 0px 0px 1px;
   border-color: #0000000a;
   border-radius: 16px;
   height: 20px;
-  width: 90%;
   font-size: 32px;
 }

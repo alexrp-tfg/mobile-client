@@ -1,14 +1,11 @@
 import {
-  runOnMainThread,
   useCallback,
   useEffect,
-  useLynxGlobalEventListener,
   useState,
 } from '@lynx-js/react';
 
 import './App.css';
 import { useNavigate } from 'react-router';
-import type { NativeModules } from '@lynx-js/types';
 
 interface GlobalProps {
   safeAreaTop: number;
@@ -24,38 +21,23 @@ export function App() {
   const nav = useNavigate();
 
   useEffect(() => {
-    console.info('Hello, ReactLynx');
-    console.log('Hello from the useEffect hook');
-    NativeModules.NativeLocalStorageModule.setStorageItem(
-      'lynx',
-      'Hello, Lynx!',
-    );
-    console.log(
-      'LocalStorage value: ',
-      NativeModules.NativeLocalStorageModule.getStorageItem('lynx'),
-    );
-    console.log(lynx.__globalProps);
-    setImages(NativeModules.NativeLocalStorageModule.getImages());
+    const images = NativeModules.NativeLocalStorageModule.getImages();
+    const splicedImages = images.splice(0, 5);
+    console.log(JSON.stringify(splicedImages, null, 2));
+    setImages(splicedImages);
   }, [lynx]);
 
 
   const onTap = useCallback((imageUrl: string) => {
     'background only';
-    console.log(lynx.__globalProps);
     setAlterLogo(!alterLogo);
     nav('/test', { state: { imageUrl}});
   }, [alterLogo]);
-
-  console.log('Info');
 
   return (
     <>
       <view
         className="App"
-        style={{
-          paddingTop:
-            (lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? 0,
-        }}
       >
         <list
           list-type="flow"
