@@ -1,4 +1,4 @@
-import type { GlobalProps } from "@lynx-js/types"
+import type { GlobalProps } from '@lynx-js/types';
 
 interface SafeAreaViewProps {
   children: React.ReactNode;
@@ -18,5 +18,5 @@ export const SafeAreaView = ({ children }: SafeAreaViewProps) => {
     >
       {children}
     </view>
-  )
-}
+  );
+};

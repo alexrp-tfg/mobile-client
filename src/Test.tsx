@@ -13,7 +13,7 @@ export function Test() {
       <view
         style={{
           width: '100%',
-          height: '100%'
+          height: '100%',
         }}
       >
         <view
@@ -112,7 +112,7 @@ export function Test() {
               height: '100px',
               paddingLeft: '20px',
             }}
-            bindinput={(e: any) => {
+            bindinput={(e) => {
               console.log('Input event:', e);
             }}
           />

@@ -1,23 +1,11 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from '@lynx-js/react';
+import { useCallback, useEffect, useState } from '@lynx-js/react';
 
 import './App.css';
 import { useNavigate } from 'react-router';
 
-interface GlobalProps {
-  safeAreaTop: number;
-  safeAreaBottom: number;
-  safeAreaLeft: number;
-  safeAreaRight: number;
-}
-
 export function App() {
   const [alterLogo, setAlterLogo] = useState(false);
   const [images, setImages] = useState<string[]>([]);
-  const [backButtonPressed, setBackButtonPressed] = useState(false);
   const nav = useNavigate();
 
   useEffect(() => {
@@ -27,18 +15,18 @@ export function App() {
     setImages(splicedImages);
   }, [lynx]);
 
-
-  const onTap = useCallback((imageUrl: string) => {
-    'background only';
-    setAlterLogo(!alterLogo);
-    nav('/test', { state: { imageUrl}});
-  }, [alterLogo]);
+  const onTap = useCallback(
+    (imageUrl: string) => {
+      'background only';
+      setAlterLogo(!alterLogo);
+      nav('/test', { state: { imageUrl } });
+    },
+    [alterLogo],
+  );
 
   return (
     <>
-      <view
-        className="App"
-      >
+      <view className="App">
         <list
           list-type="flow"
           column-count={2}
@@ -48,11 +36,6 @@ export function App() {
           <list-item item-key="start">
             <text className="Title" bindtap={() => setAlterLogo(!alterLogo)}>
               Images from device:
-            </text>
-          </list-item>
-          <list-item item-key="backbutton">
-            <text className="Tile">
-              Back button pressed: {backButtonPressed ? 'Yes' : 'No'}
             </text>
           </list-item>
           {images.length > 0 &&

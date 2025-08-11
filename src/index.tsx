@@ -1,6 +1,6 @@
 import { root } from '@lynx-js/react';
 
-import { App } from './App';
+import { App } from './App.js';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { Test } from './Test.js';
 import { BackButtonHandler } from './back-button-handler.js';
