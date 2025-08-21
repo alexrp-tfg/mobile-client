@@ -4,6 +4,7 @@ import { APP_CONFIG } from '../config/app.config.js';
 // Shared Services
 import { HttpService } from '../modules/shared/infrastructure/services/HttpService.js';
 import { StorageService } from '../modules/shared/infrastructure/services/StorageService.js';
+import { DatabaseService } from '../modules/shared/infrastructure/services/DatabaseService.js';
 
 // Media Module
 import { MediaRepository } from '../modules/media/infrastructure/repositories/MediaRepository.js';
@@ -21,6 +22,7 @@ import { LoginUserUseCase } from '../modules/authorization/application/use-cases
 import type {
   IHttpService,
   IStorageService,
+  IDatabaseService,
 } from '../modules/shared/domain/interfaces.js';
 import type {
   IMediaRepository,
@@ -35,6 +37,7 @@ class DIContainer {
   // Shared Services
   private httpService: IHttpService;
   private storageService: IStorageService;
+  private databaseService: IDatabaseService;
 
   // Media Services
   private mediaRepository: IMediaRepository;
@@ -56,6 +59,7 @@ class DIContainer {
       APP_CONFIG.API.AUTH_TOKEN,
     );
     this.storageService = new StorageService();
+    this.databaseService = new DatabaseService();
 
     // Initialize media services
     this.mediaProcessingService = new MediaProcessingService();
@@ -86,6 +90,19 @@ class DIContainer {
       DIContainer.instance = new DIContainer();
     }
     return DIContainer.instance;
+  }
+
+  // Shared Services
+  getDatabaseService(): IDatabaseService {
+    return this.databaseService;
+  }
+
+  getStorageService(): IStorageService {
+    return this.storageService;
+  }
+
+  getHttpService(): IHttpService {
+    return this.httpService;
   }
 
   // Use Cases (These are what the presentation layer should use)
