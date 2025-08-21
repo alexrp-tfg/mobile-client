@@ -1,23 +1,28 @@
 import { useState } from '@lynx-js/react';
 import { useLocation } from 'react-router';
 import { diContainer } from '../../../di/container.js';
-import { MediaUploadResult } from '../domain/entities.js';
+import { MediaUploadError, MediaUploadResult } from '../domain/entities.js';
+import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
+import { APP_CONFIG } from '../../../config/app.config.js';
 
 export function ImageUpload() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<MediaUploadResult | null>(
-    null,
-  );
+  const [uploadResult, setUploadResult] = useState<
+    MediaUploadResult | MediaUploadError | null
+  >(null);
+
+  const [inputValue, setInputValue] = useState('');
+  const [userImages, setUserImages] = useState<GetAllImagesDto[]>([]);
 
   const uploadImageUseCase = diContainer.getUploadImageUseCase();
+  const loginUserUseCase = diContainer.getLoginUserUseCase();
+  const getUserAllImagesUseCase = diContainer.getGetUserAllImagesUseCase();
   const imageUrl = location.state?.imageUrl;
 
   const handleImageUpload = async () => {
     if (!imageUrl) {
-      setUploadResult(
-        new MediaUploadResult(false, undefined, 'No image URL provided'),
-      );
+      setUploadResult(null);
       return;
     }
 
@@ -31,17 +36,17 @@ export function ImageUpload() {
         'image/jpeg',
       );
       setUploadResult(result);
-    } catch (err) {
-      setUploadResult(
-        new MediaUploadResult(
-          false,
-          undefined,
-          err instanceof Error ? err.message : 'An unexpected error occurred',
-        ),
-      );
+    } catch {
+      setUploadResult(null);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleButtonTap = async () => {
+    await loginUserUseCase.execute('admin', inputValue);
+    const userImages = await getUserAllImagesUseCase.execute();
+    setUserImages(userImages);
   };
 
   if (!imageUrl) {
@@ -87,35 +92,52 @@ export function ImageUpload() {
           className="input-box"
           text-color="#000000"
           placeholder={
-            uploadResult?.success
+            uploadResult instanceof MediaUploadResult
               ? 'Upload successful!'
-              : uploadResult?.error
-                ? uploadResult.error
-                : 'Tap image to upload to server'
+              : uploadResult instanceof MediaUploadError
+                ? uploadResult.message
+                : 'Tap image to upload'
           }
           value={
-            uploadResult?.success
+            uploadResult instanceof MediaUploadResult
               ? 'Upload successful!'
-              : uploadResult?.error || 'Tap image to upload to server'
+              : uploadResult instanceof MediaUploadError
+                ? uploadResult.message
+                : 'Tap image to upload'
           }
           style={{
             height: '100px',
             paddingLeft: '20px',
-            backgroundColor: uploadResult?.success
-              ? '#d4edda'
-              : uploadResult?.error
-                ? '#f8d7da'
-                : '#ffffff',
-            color: uploadResult?.success
-              ? '#155724'
-              : uploadResult?.error
-                ? '#721c24'
-                : '#000000',
+            backgroundColor: uploadResult ? '#d4edda' : '#ffffff',
+            color: uploadResult ? '#155724' : '#000000',
           }}
           bindinput={(e) => {
-            console.log('Input event:', e);
+            setInputValue(e.detail.value);
           }}
         />
+      </view>
+      <view
+        style={{ padding: '20px', textAlign: 'center' }}
+        bindtap={handleButtonTap}
+      >
+        <text>Send request</text>
+      </view>
+      <view>
+        {userImages.length > 0 && (
+          <view style={{ padding: '20px' }}>
+            <text>Uploaded Images:</text>
+            <view style={{ display: 'flex', flexDirection: 'column' }}>
+              {userImages.map((image) => (
+                <image
+                  key={image.id}
+                  src={`${APP_CONFIG.API.BASE_URL}/media/stream/${image.id}`}
+                  style={{ width: '100px', height: '100px', margin: '10px' }}
+                  mode="aspectFit"
+                />
+              ))}
+            </view>
+          </view>
+        )}
       </view>
     </view>
   );

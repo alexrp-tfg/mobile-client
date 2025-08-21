@@ -5,7 +5,7 @@ interface InputProps {
   'text-color'?: string;
   value?: string;
   placeholder?: string;
-  bindinput?: (e: { value: string }) => void;
+  bindinput?: (e: { detail: { value: string } }) => void;
   style?: React.CSSProperties;
   onBlur?: () => void;
 }

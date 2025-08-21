@@ -17,7 +17,6 @@ export function ImageGallery() {
       try {
         const galleryResult = await getGalleryImagesUseCase.execute(5);
         setGallery(galleryResult);
-        console.log('Gallery loaded:', JSON.stringify(galleryResult, null, 2));
       } catch (error) {
         console.error('Error loading gallery:', error);
       } finally {

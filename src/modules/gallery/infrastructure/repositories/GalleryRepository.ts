@@ -5,7 +5,7 @@ import { Gallery, GalleryImage } from '../../domain/entities.js';
 export class GalleryRepository implements IGalleryRepository {
   constructor(private readonly storageService: IStorageService) {}
 
-  async getImages(limit: number = 5): Promise<Gallery> {
+  async getLocalImages(limit: number = 5): Promise<Gallery> {
     try {
       const imageUrls = this.storageService.getImages();
       const limitedUrls = imageUrls.slice(0, limit);

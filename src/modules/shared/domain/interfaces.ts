@@ -2,6 +2,7 @@ import type { HttpResponse } from './entities.js';
 
 // Interface for HTTP services
 export interface IHttpService {
+  login(username: string, password: string): Promise<boolean>;
   post<T>(
     endpoint: string,
     body: BodyInit,

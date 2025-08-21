@@ -1,8 +1,10 @@
-import type { MediaFile, MediaUploadResult } from './entities.js';
+import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
+import type { MediaFile, MediaUploadError, MediaUploadResult } from './entities.js';
 
 // Interface for media services in the domain
 export interface IMediaRepository {
-  uploadImage(mediaFile: MediaFile): Promise<MediaUploadResult>;
+  uploadImage(mediaFile: MediaFile): Promise<MediaUploadResult | MediaUploadError>;
+  getAllImages(): Promise<GetAllImagesDto[]>;
 }
 
 // Interface for media processing services
@@ -11,5 +13,8 @@ export interface IMediaProcessingService {
     imageData: Uint8Array,
     fileName: string,
     fileType: string,
-  ): Uint8Array;
+  ): {
+    data: Uint8Array;
+    boundary: string;
+  };
 }

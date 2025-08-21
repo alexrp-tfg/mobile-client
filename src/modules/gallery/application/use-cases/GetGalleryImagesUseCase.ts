@@ -6,7 +6,7 @@ export class GetGalleryImagesUseCase {
 
   async execute(limit: number = 5): Promise<Gallery> {
     try {
-      return await this.galleryRepository.getImages(limit);
+      return await this.galleryRepository.getLocalImages(limit);
     } catch (error) {
       console.error('Error getting gallery images:', error);
       // Return empty gallery on error

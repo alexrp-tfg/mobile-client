@@ -1,6 +1,6 @@
 import type { IMediaRepository } from '../../domain/interfaces.js';
 import type { IStorageService } from '../../../shared/domain/interfaces.js';
-import { MediaFile, MediaUploadResult } from '../../domain/entities.js';
+import { MediaFile, MediaUploadError, MediaUploadResult } from '../../domain/entities.js';
 
 export class UploadImageUseCase {
   constructor(
@@ -12,16 +12,15 @@ export class UploadImageUseCase {
     imageUrl: string,
     fileName?: string,
     fileType?: string,
-  ): Promise<MediaUploadResult> {
+  ): Promise<MediaUploadResult | MediaUploadError> {
     try {
       // Get image data from storage
       const imageData = this.storageService.getImageAsUint8Array(imageUrl);
 
       if (!imageData) {
-        return new MediaUploadResult(
-          false,
-          undefined,
-          'Could not retrieve image data',
+        return new MediaUploadError(
+          'Image data not found',
+          404,
         );
       }
 
@@ -36,12 +35,9 @@ export class UploadImageUseCase {
       // Delegate upload to repository
       return await this.mediaRepository.uploadImage(mediaFile);
     } catch (error) {
-      return new MediaUploadResult(
-        false,
-        undefined,
-        error instanceof Error
-          ? error.message
-          : 'Unknown error while uploading image',
+      return new MediaUploadError(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        500,
       );
     }
   }

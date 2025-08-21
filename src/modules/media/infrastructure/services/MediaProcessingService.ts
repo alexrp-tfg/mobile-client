@@ -5,7 +5,7 @@ export class MediaProcessingService implements IMediaProcessingService {
     imageData: Uint8Array,
     fileName: string,
     fileType: string,
-  ): Uint8Array {
+  ): {data: Uint8Array; boundary: string} {
     const boundary =
       '----WebKitFormBoundary' + Math.random().toString(16).slice(2);
     const CRLF = '\r\n';
@@ -28,7 +28,7 @@ export class MediaProcessingService implements IMediaProcessingService {
     body.set(imageData, preambleBytes.length);
     body.set(postambleBytes, preambleBytes.length + imageData.length);
 
-    return body;
+    return { data: body, boundary };
   }
 
   private asciiEncode(str: string): Uint8Array {

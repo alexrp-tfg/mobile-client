@@ -4,16 +4,29 @@ export class MediaFile {
     public readonly url: string,
     public readonly fileName: string,
     public readonly fileType: string,
-    public readonly data?: Uint8Array,
+    public readonly data: Uint8Array,
   ) {}
 }
 
 export class MediaUploadResult {
+  public readonly uploaded_at: Date
+
   constructor(
-    public readonly success: boolean,
-    public readonly fileId?: string,
-    public readonly error?: string,
-    // TODO: Define what exactly the API returns on successful upload
-    public readonly metadata?: unknown,
+    public readonly id: string,
+    public readonly filename: string,
+    public readonly original_filename: string,
+    public readonly file_size: number,
+    public readonly content_type: string,
+    uploaded_at: string,
+
+  ) {
+    this.uploaded_at = new Date(uploaded_at);
+  }
+}
+
+export class MediaUploadError {
+  constructor(
+    public readonly message: string,
+    public readonly code: number,
   ) {}
 }

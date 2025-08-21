@@ -1,3 +1,4 @@
+import type { LoginResponseBody } from '../../../authorization/domain/entities.js';
 import { ApiError, HttpResponse } from '../../domain/entities.js';
 import type { IHttpService } from '../../domain/interfaces.js';
 
@@ -10,6 +11,21 @@ export class HttpService implements IHttpService {
     this.defaultHeaders = {
       Authorization: `Bearer ${authToken}`,
     };
+  }
+
+  async login(username: string, password: string): Promise<boolean> {
+    const response = await this.post<LoginResponseBody>(
+      '/login',
+      JSON.stringify({ username, password }),
+      { 'Content-Type': 'application/json' },
+    );
+
+    if (response.success && response.data) {
+      this.defaultHeaders.Authorization = `Bearer ${response.data.token}`;
+      return true;
+    } else {
+      return false;
+    }
   }
 
   async post<T>(
@@ -43,17 +59,17 @@ export class HttpService implements IHttpService {
         body,
       });
 
+      const data = await response.json();
       if (!response.ok) {
         const error = new ApiError(
           response.status,
-          response.statusText,
+          data.message,
           `HTTP ${response.status}: ${response.statusText}`,
         );
         return HttpResponse.failure<T>(error);
       }
 
-      const data = await response.json();
-      return HttpResponse.success<T>(data);
+      return HttpResponse.success<T>(data.data);
     } catch (error) {
       const apiError = new ApiError(
         0,

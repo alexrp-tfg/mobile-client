@@ -14,6 +14,9 @@ import { UploadImageUseCase } from '../modules/media/application/use-cases/Uploa
 import { GalleryRepository } from '../modules/gallery/infrastructure/repositories/GalleryRepository.js';
 import { GetGalleryImagesUseCase } from '../modules/gallery/application/use-cases/GetGalleryImagesUseCase.js';
 
+// Authentication Module
+import { LoginUserUseCase } from '../modules/authorization/application/use-cases/login-user.js';
+
 // Interfaces
 import type {
   IHttpService,
@@ -24,6 +27,7 @@ import type {
   IMediaProcessingService,
 } from '../modules/media/domain/interfaces.js';
 import type { IGalleryRepository } from '../modules/gallery/domain/interfaces.js';
+import { GetUserAllImagesUseCase } from '../modules/media/application/use-cases/get-user-all-images.js';
 
 class DIContainer {
   private static instance: DIContainer;
@@ -36,10 +40,14 @@ class DIContainer {
   private mediaRepository: IMediaRepository;
   private mediaProcessingService: IMediaProcessingService;
   private uploadImageUseCase: UploadImageUseCase;
+  private getUserAllImagesUseCase: GetUserAllImagesUseCase;
 
   // Gallery Services
   private galleryRepository: IGalleryRepository;
   private getGalleryImagesUseCase: GetGalleryImagesUseCase;
+
+  // Authentication Services
+  private loginUserUseCase: LoginUserUseCase;
 
   private constructor() {
     // Initialize shared services
@@ -59,12 +67,18 @@ class DIContainer {
       this.mediaRepository,
       this.storageService,
     );
+    this.getUserAllImagesUseCase = new GetUserAllImagesUseCase(
+      this.mediaRepository,
+    );
 
     // Initialize gallery services
     this.galleryRepository = new GalleryRepository(this.storageService);
     this.getGalleryImagesUseCase = new GetGalleryImagesUseCase(
       this.galleryRepository,
     );
+
+    // Initialize authentication services
+    this.loginUserUseCase = new LoginUserUseCase(this.httpService);
   }
 
   static getInstance(): DIContainer {
@@ -81,6 +95,14 @@ class DIContainer {
 
   getGetGalleryImagesUseCase(): GetGalleryImagesUseCase {
     return this.getGalleryImagesUseCase;
+  }
+
+  getLoginUserUseCase(): LoginUserUseCase {
+    return this.loginUserUseCase;
+  }
+
+  getGetUserAllImagesUseCase(): GetUserAllImagesUseCase {
+    return this.getUserAllImagesUseCase;
   }
 }
 
