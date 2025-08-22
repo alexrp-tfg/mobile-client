@@ -107,7 +107,7 @@ export function ImageUpload() {
           }
           style={{
             height: '100px',
-            paddingLeft: '20px',
+            paddingLeft: '10px',
             backgroundColor: uploadResult ? '#d4edda' : '#ffffff',
             color: uploadResult ? '#155724' : '#000000',
           }}

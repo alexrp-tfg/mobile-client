@@ -1,16 +1,20 @@
 import type { LoginResponseBody } from '../../../authorization/domain/entities.js';
+import { AuthManager } from '../../../authorization/infrastructure/AuthManager.js';
 import { ApiError, HttpResponse } from '../../domain/entities.js';
 import type { IHttpService } from '../../domain/interfaces.js';
 
 export class HttpService implements IHttpService {
   private baseUrl: string;
   private defaultHeaders: Record<string, string>;
+  private authManager: AuthManager;
 
   constructor(baseUrl: string, authToken: string) {
     this.baseUrl = baseUrl;
     this.defaultHeaders = {
       Authorization: `Bearer ${authToken}`,
     };
+    // TODO: Move this to DI container
+    this.authManager = AuthManager.getInstance();
   }
 
   async login(username: string, password: string): Promise<boolean> {
@@ -22,6 +26,7 @@ export class HttpService implements IHttpService {
 
     if (response.success && response.data) {
       this.defaultHeaders.Authorization = `Bearer ${response.data.token}`;
+      this.authManager.setAuthenticated(response.data.token);
       return true;
     } else {
       return false;
@@ -60,6 +65,17 @@ export class HttpService implements IHttpService {
       });
 
       const data = await response.json();
+
+      if (response.status === 401) {
+        this.authManager.setUnauthenticated();
+        const error = new ApiError(
+          401,
+          'Unauthorized',
+          'Authentication required',
+        );
+        return HttpResponse.failure<T>(error);
+      }
+
       if (!response.ok) {
         const error = new ApiError(
           response.status,

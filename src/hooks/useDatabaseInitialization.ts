@@ -5,9 +5,10 @@ import type { IDatabaseService } from '../modules/shared/domain/interfaces.js';
 export function useDatabaseInitialization() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const databaseService: IDatabaseService = diContainer.getDatabaseService();
 
   useEffect(() => {
+    const databaseService: IDatabaseService = diContainer.getDatabaseService();
+    
     const initializeDatabase = async () => {
       try {
         // Define your app's database schema
@@ -89,7 +90,7 @@ export function useDatabaseInitialization() {
     };
 
     initializeDatabase();
-  }, [databaseService]);
+  }, []); // Empty dependency array - this should only run once
 
-  return { isInitialized, error, databaseService };
+  return { isInitialized, error };
 }

@@ -9,9 +9,9 @@ export function ImageGallery() {
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
 
-  const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
-
   useEffect(() => {
+    const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
+    
     const loadGallery = async () => {
       setLoading(true);
       try {
@@ -25,15 +25,14 @@ export function ImageGallery() {
     };
 
     loadGallery();
-  }, []);
+  }, []); // Empty dependency array to prevent re-execution
 
   const onTap = useCallback(
     (imageUrl: string) => {
       'background only';
-      setAlterLogo(!alterLogo);
       nav('/upload', { state: { imageUrl } });
     },
-    [alterLogo, nav],
+    [nav],
   );
 
   if (loading) {
