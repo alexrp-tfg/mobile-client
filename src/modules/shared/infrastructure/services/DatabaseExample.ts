@@ -18,7 +18,7 @@ export class DatabaseExample {
           name TEXT NOT NULL,
           email TEXT UNIQUE NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`
+        )`,
       },
       {
         name: 'posts',
@@ -29,19 +29,23 @@ export class DatabaseExample {
           content TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id)
-        )`
+        )`,
       },
       {
         name: 'settings',
         sql: `CREATE TABLE settings (
           key TEXT PRIMARY KEY,
           value TEXT NOT NULL
-        )`
-      }
+        )`,
+      },
     ];
 
-    const result = this.databaseService.initializeDatabase('app_database', 1, tables);
-    
+    const result = this.databaseService.initializeDatabase(
+      'app_database',
+      1,
+      tables,
+    );
+
     if (result.success) {
       console.log('Database initialized successfully');
       return true;
@@ -52,27 +56,56 @@ export class DatabaseExample {
   }
 
   // Example usage methods
-  async createUser(name: string, email: string): Promise<{ success: boolean; userId?: number; error?: string }> {
+  async createUser(
+    name: string,
+    email: string,
+  ): Promise<{ success: boolean; userId?: number; error?: string }> {
     const result = await this.databaseService.insert('users', { name, email });
     return {
       success: result.success,
       userId: result.insertId,
-      error: result.error
+      error: result.error,
     };
   }
 
-  async getUsers(): Promise<Array<{ id: number; name: string; email: string; created_at: string }>> {
+  async getUsers(): Promise<
+    Array<{ id: number; name: string; email: string; created_at: string }>
+  > {
     const users = await this.databaseService.select('users');
-    return users as Array<{ id: number; name: string; email: string; created_at: string }>;
+    return users as Array<{
+      id: number;
+      name: string;
+      email: string;
+      created_at: string;
+    }>;
   }
 
-  async getUserById(id: number): Promise<{ id: number; name: string; email: string; created_at: string } | null> {
+  async getUserById(
+    id: number,
+  ): Promise<{
+    id: number;
+    name: string;
+    email: string;
+    created_at: string;
+  } | null> {
     const users = await this.databaseService.select('users', 'id = ?', [id]);
-    return users.length > 0 ? users[0] as { id: number; name: string; email: string; created_at: string } : null;
+    return users.length > 0
+      ? (users[0] as {
+          id: number;
+          name: string;
+          email: string;
+          created_at: string;
+        })
+      : null;
   }
 
-  async updateUser(id: number, data: { name?: string; email?: string }): Promise<boolean> {
-    const result = await this.databaseService.update('users', data, 'id = ?', [id]);
+  async updateUser(
+    id: number,
+    data: { name?: string; email?: string },
+  ): Promise<boolean> {
+    const result = await this.databaseService.update('users', data, 'id = ?', [
+      id,
+    ]);
     return result.success;
   }
 
@@ -81,20 +114,32 @@ export class DatabaseExample {
     return result.success;
   }
 
-  async createPost(userId: number, title: string, content: string): Promise<{ success: boolean; postId?: number }> {
-    const result = await this.databaseService.insert('posts', { user_id: userId, title, content });
+  async createPost(
+    userId: number,
+    title: string,
+    content: string,
+  ): Promise<{ success: boolean; postId?: number }> {
+    const result = await this.databaseService.insert('posts', {
+      user_id: userId,
+      title,
+      content,
+    });
     return {
       success: result.success,
-      postId: result.insertId
+      postId: result.insertId,
     };
   }
 
-  async getPostsByUser(userId: number): Promise<Array<Record<string, string | number | boolean | null>>> {
+  async getPostsByUser(
+    userId: number,
+  ): Promise<Array<Record<string, string | number | boolean | null>>> {
     return await this.databaseService.select('posts', 'user_id = ?', [userId]);
   }
 
   // Example of using raw SQL for complex queries
-  async getUsersWithPostCount(): Promise<Array<Record<string, string | number | boolean | null>>> {
+  async getUsersWithPostCount(): Promise<
+    Array<Record<string, string | number | boolean | null>>
+  > {
     const query = `
       SELECT 
         u.id,
@@ -106,9 +151,9 @@ export class DatabaseExample {
       GROUP BY u.id, u.name, u.email
       ORDER BY post_count DESC
     `;
-    
+
     const result = this.databaseService.executeSql(query);
-    return result.success ? (result.data || []) : [];
+    return result.success ? result.data || [] : [];
   }
 
   // Settings management
@@ -120,7 +165,9 @@ export class DatabaseExample {
   }
 
   async getSetting(key: string): Promise<string | null> {
-    const settings = await this.databaseService.select('settings', 'key = ?', [key]);
+    const settings = await this.databaseService.select('settings', 'key = ?', [
+      key,
+    ]);
     return settings.length > 0 ? String(settings[0].value) : null;
   }
 
@@ -130,10 +177,12 @@ export class DatabaseExample {
     return result.success;
   }
 
-  async getTableInfo(tableName: string): Promise<Array<Record<string, string | number | boolean | null>>> {
+  async getTableInfo(
+    tableName: string,
+  ): Promise<Array<Record<string, string | number | boolean | null>>> {
     const query = `PRAGMA table_info(${tableName})`;
     const result = this.databaseService.executeSql(query);
-    return result.success ? (result.data || []) : [];
+    return result.success ? result.data || [] : [];
   }
 
   async getDatabaseSize(): Promise<number> {

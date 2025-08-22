@@ -11,7 +11,7 @@ export function ImageGallery() {
 
   useEffect(() => {
     const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
-    
+
     const loadGallery = async () => {
       setLoading(true);
       try {

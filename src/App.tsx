@@ -8,12 +8,14 @@ export function App() {
   // Show loading state while database initializes
   if (!isInitialized && !error) {
     return (
-      <view style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
+      <view
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
         <text>Initializing app...</text>
       </view>
     );
@@ -22,13 +24,15 @@ export function App() {
   // Show error state if database initialization fails
   if (error) {
     return (
-      <view style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        padding: '20px'
-      }}>
+      <view
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          padding: '20px',
+        }}
+      >
         <text style={{ color: 'red', textAlign: 'center' }}>
           Database initialization failed: {error}
         </text>

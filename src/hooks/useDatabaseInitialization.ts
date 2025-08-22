@@ -8,7 +8,7 @@ export function useDatabaseInitialization() {
 
   useEffect(() => {
     const databaseService: IDatabaseService = diContainer.getDatabaseService();
-    
+
     const initializeDatabase = async () => {
       try {
         // Define your app's database schema
@@ -20,14 +20,14 @@ export function useDatabaseInitialization() {
               name TEXT NOT NULL,
               email TEXT UNIQUE NOT NULL,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`
+            )`,
           },
           {
             name: 'settings',
             sql: `CREATE TABLE IF NOT EXISTS settings (
               key TEXT PRIMARY KEY,
               value TEXT NOT NULL
-            )`
+            )`,
           },
           {
             name: 'media_cache',
@@ -37,7 +37,7 @@ export function useDatabaseInitialization() {
               local_path TEXT,
               cache_date DATETIME DEFAULT CURRENT_TIMESTAMP,
               metadata TEXT
-            )`
+            )`,
           },
           {
             name: 'user_sessions',
@@ -47,17 +47,21 @@ export function useDatabaseInitialization() {
               session_token TEXT NOT NULL,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               expires_at DATETIME
-            )`
-          }
+            )`,
+          },
         ];
 
         console.log('Initializing app database...');
-        const result = databaseService.initializeDatabase('lynx_app_db', 1, tables);
-        
+        const result = databaseService.initializeDatabase(
+          'lynx_app_db',
+          1,
+          tables,
+        );
+
         if (result.success) {
           console.log('Database initialized successfully');
           setIsInitialized(true);
-          
+
           // Set default settings if they don't exist
           await setDefaultSettings();
         } else {
@@ -73,14 +77,28 @@ export function useDatabaseInitialization() {
     const setDefaultSettings = async () => {
       try {
         // Check if default settings exist, if not, create them
-        const existingTheme = await databaseService.select('settings', 'key = ?', ['theme']);
+        const existingTheme = await databaseService.select(
+          'settings',
+          'key = ?',
+          ['theme'],
+        );
         if (existingTheme.length === 0) {
-          await databaseService.insert('settings', { key: 'theme', value: 'light' });
+          await databaseService.insert('settings', {
+            key: 'theme',
+            value: 'light',
+          });
         }
 
-        const existingLanguage = await databaseService.select('settings', 'key = ?', ['language']);
+        const existingLanguage = await databaseService.select(
+          'settings',
+          'key = ?',
+          ['language'],
+        );
         if (existingLanguage.length === 0) {
-          await databaseService.insert('settings', { key: 'language', value: 'en' });
+          await databaseService.insert('settings', {
+            key: 'language',
+            value: 'en',
+          });
         }
 
         console.log('Default settings initialized');

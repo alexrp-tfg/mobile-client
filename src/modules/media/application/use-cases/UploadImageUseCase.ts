@@ -1,6 +1,10 @@
 import type { IMediaRepository } from '../../domain/interfaces.js';
 import type { IStorageService } from '../../../shared/domain/interfaces.js';
-import { MediaFile, MediaUploadError, MediaUploadResult } from '../../domain/entities.js';
+import {
+  MediaFile,
+  MediaUploadError,
+  MediaUploadResult,
+} from '../../domain/entities.js';
 
 export class UploadImageUseCase {
   constructor(
@@ -18,10 +22,7 @@ export class UploadImageUseCase {
       const imageData = this.storageService.getImageAsUint8Array(imageUrl);
 
       if (!imageData) {
-        return new MediaUploadError(
-          'Image data not found',
-          404,
-        );
+        return new MediaUploadError('Image data not found', 404);
       }
 
       // Create the MediaFile domain object

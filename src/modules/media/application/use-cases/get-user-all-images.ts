@@ -1,5 +1,5 @@
-import type { GetAllImagesDto } from "../../../shared/infrastructure/dtos/get-all-images.dto.js";
-import type { IMediaRepository } from "../../domain/interfaces.js";
+import type { GetAllImagesDto } from '../../../shared/infrastructure/dtos/get-all-images.dto.js';
+import type { IMediaRepository } from '../../domain/interfaces.js';
 
 export class GetUserAllImagesUseCase {
   constructor(private readonly mediaRepository: IMediaRepository) {}
@@ -12,6 +12,6 @@ export class GetUserAllImagesUseCase {
     } catch (error) {
       console.error('Error fetching user images:', error);
     }
-    return []
+    return [];
   }
 }

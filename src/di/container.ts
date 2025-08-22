@@ -1,6 +1,4 @@
 // Dependency Injection Container
-import { APP_CONFIG } from '../config/app.config.js';
-
 // Shared Services
 import { HttpService } from '../modules/shared/infrastructure/services/HttpService.js';
 import { StorageService } from '../modules/shared/infrastructure/services/StorageService.js';
@@ -54,10 +52,7 @@ class DIContainer {
 
   private constructor() {
     // Initialize shared services
-    this.httpService = new HttpService(
-      APP_CONFIG.API.BASE_URL,
-      APP_CONFIG.API.AUTH_TOKEN,
-    );
+    this.httpService = new HttpService('http://192.168.240.1:8000/api', '');
     this.storageService = new StorageService();
     this.databaseService = new DatabaseService();
 

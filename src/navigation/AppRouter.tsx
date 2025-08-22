@@ -29,7 +29,6 @@ export function AppRouter() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<LoginPage />} />
         </Routes>
       </SafeAreaView>
     </MemoryRouter>

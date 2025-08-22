@@ -5,7 +5,7 @@ export class MediaProcessingService implements IMediaProcessingService {
     imageData: Uint8Array,
     fileName: string,
     fileType: string,
-  ): {data: Uint8Array; boundary: string} {
+  ): { data: Uint8Array; boundary: string } {
     const boundary =
       '----WebKitFormBoundary' + Math.random().toString(16).slice(2);
     const CRLF = '\r\n';

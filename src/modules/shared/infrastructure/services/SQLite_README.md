@@ -31,7 +31,7 @@ const tables = [
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`
+    )`,
   },
   {
     name: 'posts',
@@ -42,8 +42,8 @@ const tables = [
       content TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
-    )`
-  }
+    )`,
+  },
 ];
 
 // Initialize the database
@@ -58,11 +58,12 @@ if (result.success) {
 ### 2. Basic Operations
 
 #### Insert Data
+
 ```typescript
 // Using convenience method
 const insertResult = await storageService.insert('users', {
   name: 'John Doe',
-  email: 'john@example.com'
+  email: 'john@example.com',
 });
 
 if (insertResult.success) {
@@ -72,11 +73,12 @@ if (insertResult.success) {
 // Using raw SQL
 const result = storageService.executeSql(
   'INSERT INTO users (name, email) VALUES (?, ?)',
-  ['Jane Smith', 'jane@example.com']
+  ['Jane Smith', 'jane@example.com'],
 );
 ```
 
 #### Query Data
+
 ```typescript
 // Using convenience method
 const users = await storageService.select('users');
@@ -97,13 +99,14 @@ if (result.success) {
 ```
 
 #### Update Data
+
 ```typescript
 // Using convenience method
 const updateResult = await storageService.update(
   'users',
   { name: 'John Updated' },
   'id = ?',
-  [1]
+  [1],
 );
 
 console.log('Rows affected:', updateResult.rowsAffected);
@@ -111,11 +114,12 @@ console.log('Rows affected:', updateResult.rowsAffected);
 // Using raw SQL
 const result = storageService.executeSql(
   'UPDATE users SET name = ? WHERE id = ?',
-  ['New Name', 1]
+  ['New Name', 1],
 );
 ```
 
 #### Delete Data
+
 ```typescript
 // Using convenience method
 const deleteResult = await storageService.delete('users', 'id = ?', [1]);
@@ -123,21 +127,24 @@ const deleteResult = await storageService.delete('users', 'id = ?', [1]);
 // Using raw SQL
 const result = storageService.executeSql(
   'DELETE FROM users WHERE created_at < ?',
-  ['2023-01-01']
+  ['2023-01-01'],
 );
 ```
 
 ## Core Methods
 
 ### `initializeDatabase(dbName, version, tables)`
+
 Initializes the SQLite database with the specified name, version, and table definitions.
 
 **Parameters:**
+
 - `dbName`: String - Name of the database file
 - `version`: Number - Database version (for migrations)
 - `tables`: Array of objects with `name` and `sql` properties
 
 **Returns:**
+
 ```typescript
 {
   success: boolean;
@@ -146,13 +153,16 @@ Initializes the SQLite database with the specified name, version, and table defi
 ```
 
 ### `executeSql(query, params?)`
+
 Executes any SQL query with optional parameters.
 
 **Parameters:**
+
 - `query`: String - SQL query to execute
 - `params`: Array - Optional parameters for prepared statements
 
 **Returns:**
+
 ```typescript
 {
   success: boolean;
@@ -176,6 +186,7 @@ The `StorageService` class provides high-level methods for common operations:
 ## Advanced Usage
 
 ### Transactions
+
 ```typescript
 // Begin transaction
 storageService.executeSql('BEGIN TRANSACTION');
@@ -184,7 +195,7 @@ try {
   // Multiple operations
   storageService.executeSql('INSERT INTO users (name) VALUES (?)', ['User 1']);
   storageService.executeSql('INSERT INTO users (name) VALUES (?)', ['User 2']);
-  
+
   // Commit transaction
   storageService.executeSql('COMMIT');
 } catch (error) {
@@ -194,6 +205,7 @@ try {
 ```
 
 ### Database Maintenance
+
 ```typescript
 // Get database info
 const tableInfo = storageService.executeSql('PRAGMA table_info(users)');
@@ -203,10 +215,13 @@ const dbSize = storageService.executeSql('PRAGMA page_count');
 storageService.executeSql('VACUUM');
 
 // Create indexes
-storageService.executeSql('CREATE INDEX IF NOT EXISTS idx_user_email ON users(email)');
+storageService.executeSql(
+  'CREATE INDEX IF NOT EXISTS idx_user_email ON users(email)',
+);
 ```
 
 ### Complex Queries
+
 ```typescript
 // Joins, aggregations, subqueries - all supported
 const complexQuery = `

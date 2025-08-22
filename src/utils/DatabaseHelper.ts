@@ -6,11 +6,14 @@ import type { IDatabaseService } from '../modules/shared/domain/interfaces.js';
  * This can be used throughout your app for database operations
  */
 export class DatabaseHelper {
-  private static databaseService: IDatabaseService = diContainer.getDatabaseService();
+  private static databaseService: IDatabaseService =
+    diContainer.getDatabaseService();
 
   // Settings operations
   static async getSetting(key: string): Promise<string | null> {
-    const results = await this.databaseService.select('settings', 'key = ?', [key]);
+    const results = await this.databaseService.select('settings', 'key = ?', [
+      key,
+    ]);
     return results.length > 0 ? String(results[0].value) : null;
   }
 
@@ -21,7 +24,9 @@ export class DatabaseHelper {
   }
 
   static async deleteSetting(key: string): Promise<boolean> {
-    const result = await this.databaseService.delete('settings', 'key = ?', [key]);
+    const result = await this.databaseService.delete('settings', 'key = ?', [
+      key,
+    ]);
     return result.success;
   }
 
@@ -35,11 +40,15 @@ export class DatabaseHelper {
   }
 
   // Media cache operations
-  static async cacheMedia(url: string, localPath: string, metadata?: Record<string, unknown>): Promise<number | null> {
+  static async cacheMedia(
+    url: string,
+    localPath: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<number | null> {
     const result = await this.databaseService.insert('media_cache', {
       url,
       local_path: localPath,
-      metadata: metadata ? JSON.stringify(metadata) : null
+      metadata: metadata ? JSON.stringify(metadata) : null,
     });
     return result.success ? result.insertId || null : null;
   }
@@ -51,7 +60,11 @@ export class DatabaseHelper {
     cache_date: string;
     metadata?: Record<string, unknown>;
   } | null> {
-    const results = await this.databaseService.select('media_cache', 'url = ?', [url]);
+    const results = await this.databaseService.select(
+      'media_cache',
+      'url = ?',
+      [url],
+    );
     if (results.length > 0) {
       const row = results[0];
       return {
@@ -59,7 +72,7 @@ export class DatabaseHelper {
         url: String(row.url),
         local_path: String(row.local_path),
         cache_date: String(row.cache_date),
-        metadata: row.metadata ? JSON.parse(String(row.metadata)) : undefined
+        metadata: row.metadata ? JSON.parse(String(row.metadata)) : undefined,
       };
     }
     return null;
@@ -71,15 +84,19 @@ export class DatabaseHelper {
       WHERE cache_date < datetime('now', '-${daysOld} days')
     `;
     const result = this.databaseService.executeSql(query);
-    return result.success ? (result.rowsAffected || 0) : 0;
+    return result.success ? result.rowsAffected || 0 : 0;
   }
 
   // User session operations
-  static async createUserSession(userId: string, sessionToken: string, expiresAt?: Date): Promise<number | null> {
+  static async createUserSession(
+    userId: string,
+    sessionToken: string,
+    expiresAt?: Date,
+  ): Promise<number | null> {
     const result = await this.databaseService.insert('user_sessions', {
       user_id: userId,
       session_token: sessionToken,
-      expires_at: expiresAt ? expiresAt.toISOString() : null
+      expires_at: expiresAt ? expiresAt.toISOString() : null,
     });
     return result.success ? result.insertId || null : null;
   }
@@ -92,9 +109,9 @@ export class DatabaseHelper {
     expires_at?: string;
   } | null> {
     const results = await this.databaseService.select(
-      'user_sessions', 
-      'session_token = ? AND (expires_at IS NULL OR expires_at > datetime("now"))', 
-      [sessionToken]
+      'user_sessions',
+      'session_token = ? AND (expires_at IS NULL OR expires_at > datetime("now"))',
+      [sessionToken],
     );
     if (results.length > 0) {
       const row = results[0];
@@ -103,27 +120,32 @@ export class DatabaseHelper {
         user_id: String(row.user_id),
         session_token: String(row.session_token),
         created_at: String(row.created_at),
-        expires_at: row.expires_at ? String(row.expires_at) : undefined
+        expires_at: row.expires_at ? String(row.expires_at) : undefined,
       };
     }
     return null;
   }
 
   static async deleteUserSession(sessionToken: string): Promise<boolean> {
-    const result = await this.databaseService.delete('user_sessions', 'session_token = ?', [sessionToken]);
+    const result = await this.databaseService.delete(
+      'user_sessions',
+      'session_token = ?',
+      [sessionToken],
+    );
     return result.success;
   }
 
   static async clearExpiredSessions(): Promise<number> {
-    const query = 'DELETE FROM user_sessions WHERE expires_at IS NOT NULL AND expires_at <= datetime("now")';
+    const query =
+      'DELETE FROM user_sessions WHERE expires_at IS NOT NULL AND expires_at <= datetime("now")';
     const result = this.databaseService.executeSql(query);
-    return result.success ? (result.rowsAffected || 0) : 0;
+    return result.success ? result.rowsAffected || 0 : 0;
   }
 
   // Generic database operations
   static async executeQuery(
-    query: string, 
-    params?: Array<string | number | boolean | null>
+    query: string,
+    params?: Array<string | number | boolean | null>,
   ): Promise<{
     success: boolean;
     data?: Array<Record<string, string | number | boolean | null>>;
@@ -150,17 +172,21 @@ export class DatabaseHelper {
   }
 
   static async getTableList(): Promise<string[]> {
-    const query = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+    const query =
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
     const result = this.databaseService.executeSql(query);
     if (result.success && result.data) {
-      return result.data.map(row => String(row.name));
+      return result.data.map((row) => String(row.name));
     }
     return [];
   }
 
   // Transaction support
   static async executeInTransaction(
-    operations: Array<{ query: string; params?: Array<string | number | boolean | null> }>
+    operations: Array<{
+      query: string;
+      params?: Array<string | number | boolean | null>;
+    }>,
   ): Promise<{ success: boolean; error?: string }> {
     return await this.databaseService.executeInTransaction(operations);
   }

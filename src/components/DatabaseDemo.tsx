@@ -69,13 +69,17 @@ export function DatabaseDemo() {
 
   return (
     <view style={containerStyle}>
-      <text style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>
+      <text
+        style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}
+      >
         Database Demo
       </text>
 
       {/* Theme Setting */}
       <view style={cardStyle}>
-        <text style={{ fontSize: '18px', marginBottom: '10px' }}>Theme Settings</text>
+        <text style={{ fontSize: '18px', marginBottom: '10px' }}>
+          Theme Settings
+        </text>
         <text>Current theme: {theme}</text>
         <view style={buttonStyle} bindtap={toggleTheme}>
           <text style={{ color: 'white' }}>Toggle Theme</text>
@@ -84,15 +88,21 @@ export function DatabaseDemo() {
 
       {/* Database Info */}
       <view style={cardStyle}>
-        <text style={{ fontSize: '18px', marginBottom: '10px' }}>Database Information</text>
+        <text style={{ fontSize: '18px', marginBottom: '10px' }}>
+          Database Information
+        </text>
         <text>Database size: {dbSize} pages</text>
         <text>Tables: {tables.join(', ')}</text>
       </view>
 
       {/* Database Actions */}
       <view style={cardStyle}>
-        <text style={{ fontSize: '18px', marginBottom: '10px' }}>Database Actions</text>
-        <view style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+        <text style={{ fontSize: '18px', marginBottom: '10px' }}>
+          Database Actions
+        </text>
+        <view
+          style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}
+        >
           <view style={buttonStyle} bindtap={clearCache}>
             <text style={{ color: 'white' }}>Clear Cache</text>
           </view>
@@ -107,9 +117,13 @@ export function DatabaseDemo() {
 
       {/* Tables List */}
       <view style={cardStyle}>
-        <text style={{ fontSize: '18px', marginBottom: '10px' }}>Available Tables</text>
+        <text style={{ fontSize: '18px', marginBottom: '10px' }}>
+          Available Tables
+        </text>
         {tables.map((table, index) => (
-          <text key={index} style={{ marginLeft: '10px' }}>• {table}</text>
+          <text key={index} style={{ marginLeft: '10px' }}>
+            • {table}
+          </text>
         ))}
       </view>
     </view>

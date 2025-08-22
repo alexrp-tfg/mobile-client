@@ -9,7 +9,7 @@ export class MediaFile {
 }
 
 export class MediaUploadResult {
-  public readonly uploaded_at: Date
+  public readonly uploaded_at: Date;
 
   constructor(
     public readonly id: string,
@@ -18,7 +18,6 @@ export class MediaUploadResult {
     public readonly file_size: number,
     public readonly content_type: string,
     uploaded_at: string,
-
   ) {
     this.uploaded_at = new Date(uploaded_at);
   }
