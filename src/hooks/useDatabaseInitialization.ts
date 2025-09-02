@@ -60,10 +60,12 @@ export function useDatabaseInitialization() {
 
         if (result.success) {
           console.log('Database initialized successfully');
-          setIsInitialized(true);
 
           // Set default settings if they don't exist
           await setDefaultSettings();
+
+          // Only set initialized after everything is complete
+          setIsInitialized(true);
         } else {
           console.error('Failed to initialize database:', result.error);
           setError(result.error || 'Unknown database error');
@@ -104,10 +106,17 @@ export function useDatabaseInitialization() {
         console.log('Default settings initialized');
       } catch (err) {
         console.error('Error setting default settings:', err);
+        // Don't throw here, just log the error
       }
     };
 
-    initializeDatabase();
+    // Use setTimeout to avoid synchronous execution during render
+    setTimeout(() => {
+      initializeDatabase().catch((err) => {
+        console.error('Unhandled database initialization error:', err);
+        setError(String(err));
+      });
+    }, 0);
   }, []); // Empty dependency array - this should only run once
 
   return { isInitialized, error };

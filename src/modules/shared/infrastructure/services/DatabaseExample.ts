@@ -80,9 +80,7 @@ export class DatabaseExample {
     }>;
   }
 
-  async getUserById(
-    id: number,
-  ): Promise<{
+  async getUserById(id: number): Promise<{
     id: number;
     name: string;
     email: string;

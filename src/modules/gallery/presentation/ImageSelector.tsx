@@ -23,7 +23,7 @@ export function ImageSelector() {
     const loadGallery = async () => {
       setLoading(true);
       try {
-        const galleryResult = await getGalleryImagesUseCase.execute(10);
+        const galleryResult = await getGalleryImagesUseCase.execute(15);
         setGallery(galleryResult);
       } catch (error) {
         console.error('Error loading gallery:', error);
@@ -92,15 +92,14 @@ export function ImageSelector() {
 
       setSelectedImages([]);
       setSelectionMode(false);
-      setUploadMessage('Images uploaded successfully!');
+      setUploadMessage(
+        `${uploadPromises.length} images uploaded successfully!`,
+      );
 
-      // Clear success message after 3 seconds
       setTimeout(() => setUploadMessage(''), 3000);
     } catch (error) {
       console.error('Error uploading images:', error);
       setUploadMessage('Error uploading images. Please try again.');
-
-      // Clear error message after 5 seconds
       setTimeout(() => setUploadMessage(''), 5000);
     } finally {
       setUploading(false);
@@ -113,33 +112,77 @@ export function ImageSelector() {
     setUploadMessage('');
   }, []);
 
-  if (loading) {
-    return (
-      <view style={{ width: '100%', height: '100%', padding: '20px' }}>
-        <text>Loading images...</text>
-      </view>
-    );
-  }
-
   const images = gallery?.images || [];
 
-  return (
-    <view style={{ width: '100%', height: '100%' }}>
-      {uploadMessage && (
+  if (loading) {
+    return (
+      <view
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#000',
+        }}
+      >
         <view
           style={{
-            padding: '10px',
-            backgroundColor: uploadMessage.includes('Error')
-              ? '#f8d7da'
-              : '#d4edda',
-            borderBottom: '1px solid #ddd',
-            textAlign: 'center',
+            padding: '40px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)',
           }}
         >
           <text
             style={{
-              color: uploadMessage.includes('Error') ? '#721c24' : '#155724',
+              fontSize: '18px',
+              color: '#fff',
+              textAlign: 'center',
+            }}
+          >
+            Loading gallery...
+          </text>
+        </view>
+      </view>
+    );
+  }
+
+  return (
+    <view
+      style={{
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#000',
+        position: 'relative',
+      }}
+    >
+      {/* Status Message */}
+      {uploadMessage && (
+        <view
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            right: '20px',
+            zIndex: 1000,
+            padding: '16px',
+            backgroundColor: uploadMessage.includes('Error')
+              ? 'rgba(220, 38, 127, 0.9)'
+              : 'rgba(34, 197, 94, 0.9)',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)',
+            border: uploadMessage.includes('Error')
+              ? '1px solid rgba(220, 38, 127, 0.3)'
+              : '1px solid rgba(34, 197, 94, 0.3)',
+          }}
+        >
+          <text
+            style={{
+              color: '#fff',
               fontSize: '14px',
+              textAlign: 'center',
+              fontWeight: '500',
             }}
           >
             {uploadMessage}
@@ -147,91 +190,160 @@ export function ImageSelector() {
         </view>
       )}
 
+      {/* Selection Header */}
       {selectionMode && (
         <view
           style={{
-            padding: '10px',
-            backgroundColor: '#f0f0f0',
-            borderBottom: '1px solid #ddd',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            right: '0',
+            zIndex: 999,
+            padding: '16px 20px',
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           }}
         >
-          <text style={{ fontSize: '16px', fontWeight: 'bold' }}>
-            {selectedImages.length} selected
-          </text>
-          <view style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
-            <view
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                borderRadius: '4px',
-                opacity: uploading ? 0.6 : 1,
-              }}
-              bindtap={uploadSelectedImages}
-            >
-              <text style={{ color: 'white' }}>
-                {uploading ? 'Uploading...' : 'Upload'}
+          <view
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <view style={{ flex: 1 }}>
+              <text
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#fff',
+                  marginBottom: '4px',
+                }}
+              >
+                {selectedImages.length} Selected
+              </text>
+              <text
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                }}
+              >
+                Tap to select more, or upload now
               </text>
             </view>
+
             <view
               style={{
-                padding: '8px 16px',
-                backgroundColor: '#6c757d',
-                borderRadius: '4px',
+                display: 'flex',
+                flexDirection: 'row',
+                gap: '12px',
               }}
-              bindtap={cancelSelection}
             >
-              <text style={{ color: 'white' }}>Cancel</text>
+              <view
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: uploading
+                    ? 'rgba(59, 130, 246, 0.5)'
+                    : 'rgba(59, 130, 246, 0.9)',
+                  borderRadius: '25px',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  backdropFilter: 'blur(10px)',
+                  minWidth: '80px',
+                }}
+                bindtap={uploadSelectedImages}
+              >
+                <text
+                  style={{
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    textAlign: 'center',
+                  }}
+                >
+                  {uploading ? 'Uploading...' : 'Upload'}
+                </text>
+              </view>
+
+              <view
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: 'rgba(107, 114, 128, 0.9)',
+                  borderRadius: '25px',
+                  border: '1px solid rgba(107, 114, 128, 0.3)',
+                  backdropFilter: 'blur(10px)',
+                }}
+                bindtap={cancelSelection}
+              >
+                <text
+                  style={{
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                  }}
+                >
+                  Cancel
+                </text>
+              </view>
             </view>
           </view>
         </view>
       )}
 
-      <list
-        list-type="flow"
-        column-count={2}
+      {/* Main Content */}
+      <scroll-view
         scroll-orientation="vertical"
         style={{
           width: '100%',
-          height: uploadMessage || selectionMode ? 'calc(100% - 60px)' : '100%',
+          height: '100%',
+          paddingTop: selectionMode ? '100px' : '20px',
+          paddingBottom: '20px',
         }}
       >
-        <list-item item-key="header">
-          <text
+        {/* Header */}
+        {!selectionMode && (
+          <view
             style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              padding: '16px',
+              padding: '20px',
               textAlign: 'center',
             }}
           >
-            {selectionMode
-              ? 'Select images to upload'
-              : 'Tap to upload, long press to select'}
-          </text>
-        </list-item>
+            <text
+              style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#fff',
+                marginBottom: '8px',
+              }}
+            >
+              Photo Gallery
+            </text>
+            <text
+              style={{
+                fontSize: '14px',
+                color: 'rgba(255, 255, 255, 0.7)',
+                lineHeight: '20px',
+              }}
+            >
+              Tap to upload • Long press to select multiple
+            </text>
+          </view>
+        )}
 
-        {images.length > 0 &&
-          images.map((image) => {
-            const isSelected = selectedImages.some(
-              (selected) => selected.id === image.id,
-            );
+        {/* Image Grid */}
+        {images.length > 0 ? (
+          <view className="gallery-grid">
+            {images.map((image) => {
+              const isSelected = selectedImages.some(
+                (selected) => selected.id === image.id,
+              );
 
-            return (
-              <list-item
-                item-key={image.id}
-                key={image.id}
-                style={{
-                  width: '100%',
-                  border: isSelected ? '3px solid #007bff' : '1px solid #ddd',
-                  position: 'relative',
-                }}
-              >
+              return (
                 <view
-                  style={{ position: 'relative' }}
+                  key={image.id}
+                  className={`gallery-item ${isSelected ? 'gallery-item--selected' : 'gallery-item--normal'}`}
                   bindtap={() => handleImageTap(image.url, image.id)}
                   bindlongpress={() =>
                     handleImageLongPress(image.id, image.url)
@@ -239,14 +351,58 @@ export function ImageSelector() {
                 >
                   <image
                     src={image.url}
-                    placeholder="Loading image..."
-                    auto-size={true}
+                    placeholder="Loading..."
                     mode="aspectFill"
                     style={{
-                      opacity: isSelected ? 0.8 : 1,
-                      filter: isSelected ? 'brightness(0.9)' : 'none',
+                      width: '100%',
+                      height: '100%',
+                      opacity: isSelected ? 0.7 : 1,
+                      transition: 'opacity 0.2s ease',
                     }}
                   />
+
+                  {/* Selection Overlay */}
+                  {isSelected && (
+                    <view
+                      style={{
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        right: '0',
+                        bottom: '0',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <view
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                          borderRadius: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '2px solid #fff',
+                          backdropFilter: 'blur(10px)',
+                        }}
+                      >
+                        <text
+                          style={{
+                            color: '#fff',
+                            fontSize: '16px',
+                            fontWeight: '700',
+                          }}
+                        >
+                          ✓
+                        </text>
+                      </view>
+                    </view>
+                  )}
+
+                  {/* Selection Badge */}
                   {isSelected && (
                     <view
                       style={{
@@ -255,41 +411,77 @@ export function ImageSelector() {
                         right: '8px',
                         width: '24px',
                         height: '24px',
-                        backgroundColor: '#007bff',
+                        backgroundColor: 'rgba(59, 130, 246, 0.9)',
                         borderRadius: '12px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        border: '2px solid #fff',
                       }}
                     >
                       <text
                         style={{
-                          color: 'white',
+                          color: '#fff',
                           fontSize: '12px',
-                          fontWeight: 'bold',
+                          fontWeight: '700',
                         }}
                       >
-                        ✓
+                        {selectedImages.findIndex(
+                          (img) => img.id === image.id,
+                        ) + 1}
                       </text>
                     </view>
                   )}
                 </view>
-              </list-item>
-            );
-          })}
-
-        <list-item item-key="footer">
-          <text
+              );
+            })}
+          </view>
+        ) : (
+          <view
             style={{
-              padding: '16px',
+              padding: '60px 20px',
               textAlign: 'center',
-              color: '#666',
             }}
           >
-            {images.length > 0 ? 'End of images' : 'No images found'}
-          </text>
-        </list-item>
-      </list>
+            <text
+              style={{
+                fontSize: '18px',
+                color: 'rgba(255, 255, 255, 0.6)',
+                marginBottom: '8px',
+              }}
+            >
+              No Images Found
+            </text>
+            <text
+              style={{
+                fontSize: '14px',
+                color: 'rgba(255, 255, 255, 0.4)',
+              }}
+            >
+              Your photo gallery appears to be empty
+            </text>
+          </view>
+        )}
+
+        {/* Footer */}
+        {images.length > 0 && (
+          <view
+            style={{
+              padding: '40px 20px 20px',
+              textAlign: 'center',
+            }}
+          >
+            <text
+              style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+              }}
+            >
+              {images.length} photos • Lynx Gallery
+            </text>
+          </view>
+        )}
+      </scroll-view>
     </view>
   );
 }
