@@ -3,6 +3,8 @@ import type {
   MediaFile,
   MediaUploadError,
   MediaUploadResult,
+  MediaDeleteResult,
+  MediaDeleteError,
 } from './entities.js';
 
 // Interface for media services in the domain
@@ -11,6 +13,7 @@ export interface IMediaRepository {
     mediaFile: MediaFile,
   ): Promise<MediaUploadResult | MediaUploadError>;
   getAllImages(): Promise<GetAllImagesDto[]>;
+  deleteImage(mediaId: string): Promise<MediaDeleteResult | MediaDeleteError>;
 }
 
 // Interface for media processing services

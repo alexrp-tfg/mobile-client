@@ -12,6 +12,10 @@ export interface IHttpService {
     endpoint: string,
     headers?: Record<string, string>,
   ): Promise<HttpResponse<T>>;
+  delete<T>(
+    endpoint: string,
+    headers?: Record<string, string>,
+  ): Promise<HttpResponse<T>>;
 }
 
 // Interface for local storage services

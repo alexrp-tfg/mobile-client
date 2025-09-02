@@ -8,6 +8,8 @@ import {
   MediaFile,
   MediaUploadError,
   MediaUploadResult,
+  MediaDeleteResult,
+  MediaDeleteError,
 } from '../../domain/entities.js';
 import type { MediaUploadApiResponse } from '../interfaces/api-responses.js';
 import type { GetAllImagesDto } from '../../../shared/infrastructure/dtos/get-all-images.dto.js';
@@ -79,6 +81,28 @@ export class MediaRepository implements IMediaRepository {
       console.error('Error fetching all images:', error);
       throw new Error(
         error instanceof Error ? error.message : 'Unknown error occurred',
+      );
+    }
+  }
+
+  async deleteImage(
+    mediaId: string,
+  ): Promise<MediaDeleteResult | MediaDeleteError> {
+    try {
+      const response = await this.httpService.delete(`/media/${mediaId}`);
+
+      if (response.success) {
+        return new MediaDeleteResult(mediaId, 'Media deleted successfully');
+      } else {
+        return new MediaDeleteError(
+          response.error?.message || 'Error deleting image',
+          response.error?.code || 500,
+        );
+      }
+    } catch (error) {
+      return new MediaDeleteError(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        500,
       );
     }
   }

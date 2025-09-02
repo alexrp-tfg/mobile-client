@@ -1,6 +1,7 @@
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { ImageGallery } from '../modules/gallery/presentation/ImageGallery.js';
 import { ImageUpload } from '../modules/media/presentation/ImageUpload.js';
+import { OnlineGallery } from '../modules/media/presentation/OnlineGallery.js';
 import { LoginPage } from '../modules/authorization/presentation/LoginPage.js';
 import { ProtectedRoute } from './ProtectedRoute.js';
 import { BackButtonHandler } from './back-button-handler.js';
@@ -18,6 +19,14 @@ export function AppRouter() {
             element={
               <ProtectedRoute>
                 <ImageGallery />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/online-gallery"
+            element={
+              <ProtectedRoute>
+                <OnlineGallery />
               </ProtectedRoute>
             }
           />

@@ -48,6 +48,13 @@ export class HttpService implements IHttpService {
     return this.request<T>(endpoint, 'GET', undefined, headers);
   }
 
+  async delete<T>(
+    endpoint: string,
+    headers?: Record<string, string>,
+  ): Promise<HttpResponse<T>> {
+    return this.request<T>(endpoint, 'DELETE', undefined, headers);
+  }
+
   private async request<T>(
     endpoint: string,
     method: string,

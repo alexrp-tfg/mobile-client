@@ -29,3 +29,18 @@ export class MediaUploadError {
     public readonly code: number,
   ) {}
 }
+
+export class MediaDeleteResult {
+  constructor(
+    public readonly id: string,
+    public readonly message: string,
+    public readonly deleted_at: Date = new Date(),
+  ) {}
+}
+
+export class MediaDeleteError {
+  constructor(
+    public readonly message: string,
+    public readonly code: number,
+  ) {}
+}

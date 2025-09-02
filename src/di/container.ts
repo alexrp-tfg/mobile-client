@@ -8,6 +8,7 @@ import { DatabaseService } from '../modules/shared/infrastructure/services/Datab
 import { MediaRepository } from '../modules/media/infrastructure/repositories/MediaRepository.js';
 import { MediaProcessingService } from '../modules/media/infrastructure/services/MediaProcessingService.js';
 import { UploadImageUseCase } from '../modules/media/application/use-cases/UploadImageUseCase.js';
+import { DeleteImageUseCase } from '../modules/media/application/use-cases/DeleteImageUseCase.js';
 
 // Gallery Module
 import { GalleryRepository } from '../modules/gallery/infrastructure/repositories/GalleryRepository.js';
@@ -41,6 +42,7 @@ class DIContainer {
   private mediaRepository: IMediaRepository;
   private mediaProcessingService: IMediaProcessingService;
   private uploadImageUseCase: UploadImageUseCase;
+  private deleteImageUseCase: DeleteImageUseCase;
   private getUserAllImagesUseCase: GetUserAllImagesUseCase;
 
   // Gallery Services
@@ -66,6 +68,7 @@ class DIContainer {
       this.mediaRepository,
       this.storageService,
     );
+    this.deleteImageUseCase = new DeleteImageUseCase(this.mediaRepository);
     this.getUserAllImagesUseCase = new GetUserAllImagesUseCase(
       this.mediaRepository,
     );
@@ -115,6 +118,10 @@ class DIContainer {
 
   getGetUserAllImagesUseCase(): GetUserAllImagesUseCase {
     return this.getUserAllImagesUseCase;
+  }
+
+  getDeleteImageUseCase(): DeleteImageUseCase {
+    return this.deleteImageUseCase;
   }
 }
 
