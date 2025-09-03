@@ -208,3 +208,19 @@
   margin-top: 8px;
   color: #adb5bd;
 }
+
+.image-upload-already-uploaded {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.image-upload-already-uploaded .image-upload-error-title {
+  color: #856404;
+}
+
+.image-upload-already-uploaded .image-upload-error-message {
+  color: #856404;
+}

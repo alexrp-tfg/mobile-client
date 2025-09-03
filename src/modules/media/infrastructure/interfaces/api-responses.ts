@@ -9,6 +9,10 @@ export interface MediaUploadApiResponse {
   uploaded_at: string;
 }
 
+export interface UploadedFilesApiResponse {
+  files: string[]; // Array of filenames
+}
+
 export interface ApiErrorResponse {
   message: string;
 }

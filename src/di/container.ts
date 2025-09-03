@@ -13,6 +13,7 @@ import { DeleteImageUseCase } from '../modules/media/application/use-cases/Delet
 // Gallery Module
 import { GalleryRepository } from '../modules/gallery/infrastructure/repositories/GalleryRepository.js';
 import { GetGalleryImagesUseCase } from '../modules/gallery/application/use-cases/GetGalleryImagesUseCase.js';
+import { GetUploadedFilesStatusUseCase } from '../modules/gallery/application/use-cases/GetUploadedFilesStatusUseCase.js';
 
 // Authentication Module
 import { LoginUserUseCase } from '../modules/authorization/application/use-cases/login-user.js';
@@ -49,6 +50,7 @@ class DIContainer {
   // Gallery Services
   private galleryRepository: IGalleryRepository;
   private getGalleryImagesUseCase: GetGalleryImagesUseCase;
+  private getUploadedFilesStatusUseCase: GetUploadedFilesStatusUseCase;
 
   // Authentication Services
   private loginUserUseCase: LoginUserUseCase;
@@ -79,6 +81,9 @@ class DIContainer {
     this.galleryRepository = new GalleryRepository(this.storageService);
     this.getGalleryImagesUseCase = new GetGalleryImagesUseCase(
       this.galleryRepository,
+    );
+    this.getUploadedFilesStatusUseCase = new GetUploadedFilesStatusUseCase(
+      this.getUserAllImagesUseCase,
     );
 
     // Initialize authentication services
@@ -113,6 +118,10 @@ class DIContainer {
 
   getGetGalleryImagesUseCase(): GetGalleryImagesUseCase {
     return this.getGalleryImagesUseCase;
+  }
+
+  getGetUploadedFilesStatusUseCase(): GetUploadedFilesStatusUseCase {
+    return this.getUploadedFilesStatusUseCase;
   }
 
   getLoginUserUseCase(): LoginUserUseCase {

@@ -1,4 +1,4 @@
-import { useState } from '@lynx-js/react';
+import { useState, useEffect } from '@lynx-js/react';
 import { useLocation, useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
 import { MediaUploadError, MediaUploadResult } from '../domain/entities.js';
@@ -10,18 +10,61 @@ export function ImageUpload() {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingUploadStatus, setCheckingUploadStatus] = useState(true);
+  const [isAlreadyUploaded, setIsAlreadyUploaded] = useState(false);
+  const [uploadedImageId, setUploadedImageId] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<
     MediaUploadResult | MediaUploadError | null
   >(null);
 
   const uploadImageUseCase = diContainer.getUploadImageUseCase();
+  const getUserAllImagesUseCase = diContainer.getGetUserAllImagesUseCase();
+  const deleteImageUseCase = diContainer.getDeleteImageUseCase();
   const imageUrl = location.state?.imageUrl;
   const fileName = location.state?.fileName;
+
+  // Check if image is already uploaded
+  useEffect(() => {
+    const checkUploadStatus = async () => {
+      if (!fileName) {
+        setCheckingUploadStatus(false);
+        return;
+      }
+
+      try {
+        const uploadedImages = await getUserAllImagesUseCase.execute();
+        const existingImage = uploadedImages.find(
+          (img) => img.original_filename === fileName,
+        );
+
+        if (existingImage) {
+          setIsAlreadyUploaded(true);
+          setUploadedImageId(existingImage.id);
+        }
+      } catch (error) {
+        console.error('Error checking upload status:', error);
+      } finally {
+        setCheckingUploadStatus(false);
+      }
+    };
+
+    checkUploadStatus();
+  }, [fileName, getUserAllImagesUseCase]);
 
   const handleImageUpload = async () => {
     console.log('Starting image upload...');
     if (!imageUrl) {
       setUploadResult(null);
+      return;
+    }
+
+    if (isAlreadyUploaded) {
+      setUploadResult(
+        new MediaUploadError(
+          'This image is already uploaded to the server.',
+          409,
+        ),
+      );
       return;
     }
 
@@ -54,6 +97,48 @@ export function ImageUpload() {
     } finally {
       setLoading(false);
       console.log('Loading is false');
+    }
+  };
+
+  const handleDeleteUploadedImage = async () => {
+    if (!uploadedImageId) return;
+
+    setLoading(true);
+    try {
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 50);
+        });
+      });
+
+      const result = await deleteImageUseCase.execute(uploadedImageId);
+
+      if ('id' in result && !('code' in result)) {
+        // Success - image deleted
+        setIsAlreadyUploaded(false);
+        setUploadedImageId(null);
+        setUploadResult(
+          new MediaUploadResult(
+            result.id,
+            fileName || 'image.jpg',
+            fileName || 'image.jpg',
+            0,
+            'image/jpeg',
+            new Date().toISOString(),
+          ),
+        );
+      } else {
+        setUploadResult(
+          new MediaUploadError(`Error deleting image: ${result.message}`, 500),
+        );
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      setUploadResult(
+        new MediaUploadError('Error deleting image. Please try again.', 500),
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,7 +189,7 @@ export function ImageUpload() {
 
       <view className="image-upload-content">
         <view className="image-upload-preview">
-          {!loading && (
+          {!loading && !checkingUploadStatus && (
             <image
               src={imageUrl}
               auto-size={true}
@@ -114,17 +199,21 @@ export function ImageUpload() {
               style={{ opacity: loading ? 0.7 : 1 }}
             />
           )}
-          {loading && (
+          {(loading || checkingUploadStatus) && (
             <LoadingSpinner
               overlay={true}
-              text="Uploading to server..."
+              text={
+                checkingUploadStatus
+                  ? 'Checking upload status...'
+                  : 'Uploading to server...'
+              }
               color="#007bff"
             />
           )}
         </view>
 
         <view className="image-upload-actions">
-          {!uploadResult && (
+          {!uploadResult && !checkingUploadStatus && !isAlreadyUploaded && (
             <LoadingButton
               text="Upload to Server"
               loadingText="Uploading..."
@@ -132,6 +221,31 @@ export function ImageUpload() {
               onTap={handleImageUpload}
               className="image-upload-button"
             />
+          )}
+
+          {!uploadResult && !checkingUploadStatus && isAlreadyUploaded && (
+            <view className="image-upload-already-uploaded">
+              <text className="image-upload-error-title">Already Uploaded</text>
+              <text className="image-upload-error-message">
+                This image is already uploaded to the server
+              </text>
+              <view className="image-upload-actions-row">
+                <LoadingButton
+                  text="Delete from Server"
+                  loadingText="Deleting..."
+                  loading={loading}
+                  onTap={handleDeleteUploadedImage}
+                  variant="danger"
+                  className="image-upload-button"
+                />
+                <view
+                  className="image-upload-button secondary"
+                  bindtap={handleBackToGallery}
+                >
+                  <text>Back to Gallery</text>
+                </view>
+              </view>
+            </view>
           )}
 
           {uploadResult instanceof MediaUploadResult && (

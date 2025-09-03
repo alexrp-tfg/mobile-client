@@ -5,15 +5,21 @@ import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
 import { LoadingButton } from '../../../components/LoadingButton.js';
 import { LogoutButton } from '../../../components/LogoutButton.js';
 import type { Gallery } from '../domain/entities.js';
+import type { GalleryImageWithUploadStatus } from '../application/use-cases/GetUploadedFilesStatusUseCase.js';
 
 interface SelectedImage {
   id: string;
   url: string;
   fileName?: string;
+  isUploaded?: boolean;
+  uploadedImageId?: string;
 }
 
 export function ImageSelector() {
   const [gallery, setGallery] = useState<Gallery | null>(null);
+  const [imagesWithUploadStatus, setImagesWithUploadStatus] = useState<
+    GalleryImageWithUploadStatus[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -24,12 +30,20 @@ export function ImageSelector() {
 
   useEffect(() => {
     const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
+    const getUploadedFilesStatusUseCase =
+      diContainer.getGetUploadedFilesStatusUseCase();
 
     const loadGallery = async () => {
       setLoading(true);
       try {
         const galleryResult = await getGalleryImagesUseCase.execute(15);
         setGallery(galleryResult);
+
+        // Check upload status for all images
+        const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
+          galleryResult.images,
+        );
+        setImagesWithUploadStatus(imagesWithStatus);
       } catch (error) {
         console.error('Error loading gallery:', error);
       } finally {
@@ -72,26 +86,121 @@ export function ImageSelector() {
   );
 
   const handleImageTap = useCallback(
-    (imageUrl: string, imageId: string, fileName?: string) => {
+    (
+      imageUrl: string,
+      imageId: string,
+      fileName?: string,
+      isUploaded?: boolean,
+    ) => {
       if (!selectionMode) {
-        nav('/upload', { state: { imageUrl, fileName } });
+        if (isUploaded) {
+          // For uploaded images, show a message or navigate differently
+          setUploadMessage(
+            'This image is already uploaded. Long press to delete from server.',
+          );
+          setTimeout(() => {
+            setUploadMessage('');
+          }, 3000);
+        } else {
+          // For non-uploaded images, navigate to upload
+          nav('/upload', { state: { imageUrl, fileName } });
+        }
       } else {
-        toggleImageSelection(imageId, imageUrl, fileName);
+        // Only allow selection of non-uploaded images
+        if (!isUploaded) {
+          toggleImageSelection(imageId, imageUrl, fileName);
+        }
       }
     },
     [nav, selectionMode, toggleImageSelection],
   );
 
+  const handleDeleteUploadedImage = useCallback(
+    async (uploadedImageId: string, fileName: string) => {
+      setUploading(true);
+      setUploadMessage('');
+      setShowMessage(false);
+      const deleteImageUseCase = diContainer.getDeleteImageUseCase();
+
+      try {
+        // Use requestAnimationFrame to ensure the loading state is rendered
+        await new Promise((resolve) => {
+          requestAnimationFrame(() => {
+            setTimeout(resolve, 50);
+          });
+        });
+
+        const result = await deleteImageUseCase.execute(uploadedImageId);
+
+        if ('id' in result && !('code' in result)) {
+          // Success - MediaDeleteResult has 'id' but not 'code'
+          // Reload the gallery to update status
+          const getGalleryImagesUseCase =
+            diContainer.getGetGalleryImagesUseCase();
+          const getUploadedFilesStatusUseCase =
+            diContainer.getGetUploadedFilesStatusUseCase();
+
+          const galleryResult = await getGalleryImagesUseCase.execute(15);
+          setGallery(galleryResult);
+
+          const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
+            galleryResult.images,
+          );
+          setImagesWithUploadStatus(imagesWithStatus);
+
+          setUploadMessage(`${fileName} deleted from server successfully!`);
+        } else {
+          // Error - MediaDeleteError has 'code' property
+          setUploadMessage(`Error deleting ${fileName}: ${result.message}`);
+        }
+
+        setTimeout(() => {
+          setUploadMessage('');
+        }, 3000);
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        setUploadMessage('Error deleting image. Please try again.');
+        setTimeout(() => {
+          setUploadMessage('');
+        }, 5000);
+      } finally {
+        setUploading(false);
+      }
+    },
+    [],
+  );
+
   const handleImageLongPress = useCallback(
-    (imageId: string, imageUrl: string, fileName?: string) => {
-      setSelectionMode(true);
-      toggleImageSelection(imageId, imageUrl, fileName);
+    (
+      imageId: string,
+      imageUrl: string,
+      fileName?: string,
+      isUploaded?: boolean,
+      uploadedImageId?: string,
+    ) => {
+      if (isUploaded && uploadedImageId) {
+        // For uploaded images, trigger delete from server
+        handleDeleteUploadedImage(uploadedImageId, fileName || 'image');
+      } else {
+        // For non-uploaded images, enter selection mode
+        setSelectionMode(true);
+        toggleImageSelection(imageId, imageUrl, fileName);
+      }
     },
     [toggleImageSelection],
   );
 
   const uploadSelectedImages = useCallback(async () => {
-    if (selectedImages.length === 0) return;
+    const nonUploadedImages = selectedImages.filter((img) => !img.isUploaded);
+    if (nonUploadedImages.length === 0) {
+      setUploadMessage(
+        'No new images to upload. Selected images are already uploaded.',
+      );
+      setTimeout(() => {
+        setUploadMessage('');
+      }, 3000);
+      return;
+    }
 
     setUploading(true);
     setUploadMessage('');
@@ -106,7 +215,7 @@ export function ImageSelector() {
         });
       });
 
-      const uploadPromises = selectedImages.map((image, index) =>
+      const uploadPromises = nonUploadedImages.map((image, index) =>
         uploadImageUseCase.execute(
           image.url,
           image.fileName || `selected_image_${index + 1}.jpg`,
@@ -116,10 +225,23 @@ export function ImageSelector() {
 
       await Promise.all(uploadPromises);
 
+      // Reload gallery to update upload status
+      const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
+      const getUploadedFilesStatusUseCase =
+        diContainer.getGetUploadedFilesStatusUseCase();
+
+      const galleryResult = await getGalleryImagesUseCase.execute(15);
+      setGallery(galleryResult);
+
+      const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
+        galleryResult.images,
+      );
+      setImagesWithUploadStatus(imagesWithStatus);
+
       setSelectedImages([]);
       setSelectionMode(false);
       setUploadMessage(
-        `${uploadPromises.length} images uploaded successfully!`,
+        `${nonUploadedImages.length} images uploaded successfully!`,
       );
 
       setTimeout(() => {
@@ -142,7 +264,10 @@ export function ImageSelector() {
     setUploadMessage('');
   }, []);
 
-  const images = gallery?.images || [];
+  const images =
+    imagesWithUploadStatus.length > 0
+      ? imagesWithUploadStatus
+      : gallery?.images || [];
 
   if (loading) {
     return (
@@ -171,40 +296,40 @@ export function ImageSelector() {
       }}
     >
       {/* Status Message */}
-        <view
+      <view
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          right: '20px',
+          zIndex: 1000,
+          padding: '16px',
+          backgroundColor: uploadMessage.includes('Error')
+            ? 'rgba(220, 38, 127, 0.9)'
+            : 'rgba(34, 197, 94, 0.9)',
+          borderRadius: '12px',
+          backdropFilter: 'blur(10px)',
+          border: uploadMessage.includes('Error')
+            ? '1px solid rgba(220, 38, 127, 0.3)'
+            : '1px solid rgba(34, 197, 94, 0.3)',
+          opacity: showMessage && uploadMessage ? 1 : 0,
+          transform: showMessage ? 'translateY(0)' : 'translateY(-20px)',
+          transition: 'opacity 0.3s ease, transform 0.3s ease',
+          visibility: showMessage ? 'visible' : 'hidden',
+          pointerEvents: showMessage ? 'auto' : 'none',
+        }}
+      >
+        <text
           style={{
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-            right: '20px',
-            zIndex: 1000,
-            padding: '16px',
-            backgroundColor: uploadMessage.includes('Error')
-              ? 'rgba(220, 38, 127, 0.9)'
-              : 'rgba(34, 197, 94, 0.9)',
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)',
-            border: uploadMessage.includes('Error')
-              ? '1px solid rgba(220, 38, 127, 0.3)'
-              : '1px solid rgba(34, 197, 94, 0.3)',
-            opacity: showMessage && uploadMessage ? 1 : 0,
-            transform: showMessage ? 'translateY(0)' : 'translateY(-20px)',
-            transition: 'opacity 0.3s ease, transform 0.3s ease',
-            visibility: showMessage ? 'visible' : 'hidden',
-            pointerEvents: showMessage ? 'auto' : 'none',
+            color: '#fff',
+            fontSize: '14px',
+            textAlign: 'center',
+            fontWeight: '500',
           }}
         >
-          <text
-            style={{
-              color: '#fff',
-              fontSize: '14px',
-              textAlign: 'center',
-              fontWeight: '500',
-            }}
-          >
-            {uploadMessage}
-          </text>
-        </view>
+          {uploadMessage}
+        </text>
+      </view>
 
       {/* Selection Header */}
       {selectionMode && (
@@ -375,19 +500,27 @@ export function ImageSelector() {
               const isSelected = selectedImages.some(
                 (selected) => selected.id === image.id,
               );
+              const imageWithStatus = image as GalleryImageWithUploadStatus;
 
               return (
                 <view
                   key={image.id}
                   className={`gallery-item ${isSelected ? 'gallery-item--selected' : 'gallery-item--normal'}`}
                   bindtap={() =>
-                    handleImageTap(image.url, image.id, image.metadata?.name)
+                    handleImageTap(
+                      image.url,
+                      image.id,
+                      image.metadata?.name,
+                      imageWithStatus.isUploaded,
+                    )
                   }
                   bindlongpress={() =>
                     handleImageLongPress(
                       image.id,
                       image.url,
                       image.metadata?.name,
+                      imageWithStatus.isUploaded,
+                      imageWithStatus.uploadedImageId,
                     )
                   }
                 >
@@ -402,6 +535,35 @@ export function ImageSelector() {
                       transition: 'opacity 0.2s ease',
                     }}
                   />
+
+                  {/* Upload Status Indicator */}
+                  {(image as GalleryImageWithUploadStatus).isUploaded && (
+                    <view
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(34, 197, 94, 0.9)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(34, 197, 94, 0.3)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
+                      <text
+                        style={{
+                          color: '#fff',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        ✓ Uploaded
+                      </text>
+                    </view>
+                  )}
 
                   {/* Selection Overlay */}
                   {isSelected && (
