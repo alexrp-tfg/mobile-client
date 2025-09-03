@@ -68,7 +68,13 @@ export function ImageSelector() {
   }, [uploadMessage]);
 
   const toggleImageSelection = useCallback(
-    (imageId: string, imageUrl: string, fileName?: string) => {
+    (
+      imageId: string,
+      imageUrl: string,
+      fileName?: string,
+      isUploaded?: boolean,
+      uploadedImageId?: string,
+    ) => {
       setSelectedImages((prev) => {
         const isSelected = prev.some((img) => img.id === imageId);
         if (isSelected) {
@@ -78,7 +84,16 @@ export function ImageSelector() {
           }
           return newSelection;
         } else {
-          return [...prev, { id: imageId, url: imageUrl, fileName }];
+          return [
+            ...prev,
+            {
+              id: imageId,
+              url: imageUrl,
+              fileName,
+              isUploaded,
+              uploadedImageId,
+            },
+          ];
         }
       });
     },
@@ -91,10 +106,11 @@ export function ImageSelector() {
       imageId: string,
       fileName?: string,
       isUploaded?: boolean,
+      uploadedImageId?: string,
     ) => {
       if (!selectionMode) {
         if (isUploaded) {
-          // For uploaded images, show a message or navigate differently
+          // For uploaded images, show a message
           setUploadMessage(
             'This image is already uploaded. Long press to delete from server.',
           );
@@ -106,68 +122,67 @@ export function ImageSelector() {
           nav('/upload', { state: { imageUrl, fileName } });
         }
       } else {
-        // Only allow selection of non-uploaded images
-        if (!isUploaded) {
-          toggleImageSelection(imageId, imageUrl, fileName);
-        }
-      }
-    },
-    [nav, selectionMode, toggleImageSelection],
-  );
+        // In selection mode, check what type of images are selected
+        console.log(
+          'In selection mode, selectedImages.length:',
+          selectedImages.length,
+        );
+        console.log(
+          'Current selectedImages:',
+          selectedImages.map((img) => ({
+            id: img.id,
+            isUploaded: img.isUploaded,
+          })),
+        );
+        console.log(
+          'Trying to select image:',
+          imageId,
+          'isUploaded:',
+          isUploaded,
+        );
 
-  const handleDeleteUploadedImage = useCallback(
-    async (uploadedImageId: string, fileName: string) => {
-      setUploading(true);
-      setUploadMessage('');
-      setShowMessage(false);
-      const deleteImageUseCase = diContainer.getDeleteImageUseCase();
+        if (selectedImages.length > 0) {
+          const firstSelectedIsUploaded = selectedImages[0].isUploaded;
+          console.log('First selected is uploaded:', firstSelectedIsUploaded);
 
-      try {
-        // Use requestAnimationFrame to ensure the loading state is rendered
-        await new Promise((resolve) => {
-          requestAnimationFrame(() => {
-            setTimeout(resolve, 50);
-          });
-        });
-
-        const result = await deleteImageUseCase.execute(uploadedImageId);
-
-        if ('id' in result && !('code' in result)) {
-          // Success - MediaDeleteResult has 'id' but not 'code'
-          // Reload the gallery to update status
-          const getGalleryImagesUseCase =
-            diContainer.getGetGalleryImagesUseCase();
-          const getUploadedFilesStatusUseCase =
-            diContainer.getGetUploadedFilesStatusUseCase();
-
-          const galleryResult = await getGalleryImagesUseCase.execute(15);
-          setGallery(galleryResult);
-
-          const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
-            galleryResult.images,
-          );
-          setImagesWithUploadStatus(imagesWithStatus);
-
-          setUploadMessage(`${fileName} deleted from server successfully!`);
+          if (firstSelectedIsUploaded && isUploaded) {
+            // In delete mode - only allow selecting uploaded images
+            console.log('Adding to delete selection');
+            toggleImageSelection(
+              imageId,
+              imageUrl,
+              fileName,
+              isUploaded,
+              uploadedImageId,
+            );
+          } else if (!firstSelectedIsUploaded && !isUploaded) {
+            // In upload mode - only allow selecting non-uploaded images
+            console.log('Adding to upload selection');
+            toggleImageSelection(
+              imageId,
+              imageUrl,
+              fileName,
+              isUploaded,
+              uploadedImageId,
+            );
+          } else {
+            console.log('Ignoring tap - incompatible image type');
+          }
+          // Ignore taps on incompatible image types
         } else {
-          // Error - MediaDeleteError has 'code' property
-          setUploadMessage(`Error deleting ${fileName}: ${result.message}`);
+          // First selection determines the mode
+          console.log('First selection, determining mode');
+          toggleImageSelection(
+            imageId,
+            imageUrl,
+            fileName,
+            isUploaded,
+            uploadedImageId,
+          );
         }
-
-        setTimeout(() => {
-          setUploadMessage('');
-        }, 3000);
-      } catch (error) {
-        console.error('Error deleting image:', error);
-        setUploadMessage('Error deleting image. Please try again.');
-        setTimeout(() => {
-          setUploadMessage('');
-        }, 5000);
-      } finally {
-        setUploading(false);
       }
     },
-    [],
+    [nav, selectionMode, selectedImages, toggleImageSelection],
   );
 
   const handleImageLongPress = useCallback(
@@ -179,16 +194,138 @@ export function ImageSelector() {
       uploadedImageId?: string,
     ) => {
       if (isUploaded && uploadedImageId) {
-        // For uploaded images, trigger delete from server
-        handleDeleteUploadedImage(uploadedImageId, fileName || 'image');
+        // For uploaded images, enter selection mode for deletion
+        setSelectionMode(true);
+        toggleImageSelection(
+          imageId,
+          imageUrl,
+          fileName,
+          isUploaded,
+          uploadedImageId,
+        );
       } else {
-        // For non-uploaded images, enter selection mode
+        // For non-uploaded images, enter selection mode for upload
         setSelectionMode(true);
         toggleImageSelection(imageId, imageUrl, fileName);
       }
     },
     [toggleImageSelection],
   );
+
+  const deleteSelectedImages = useCallback(async () => {
+    const uploadedImages = selectedImages.filter(
+      (img) => img.isUploaded && img.uploadedImageId,
+    );
+
+    console.log('Selected images for deletion:', uploadedImages.length);
+    console.log(
+      'Uploaded image IDs:',
+      uploadedImages.map((img) => img.uploadedImageId),
+    );
+
+    if (uploadedImages.length === 0) {
+      setUploadMessage('No uploaded images selected for deletion.');
+      setTimeout(() => {
+        setUploadMessage('');
+      }, 3000);
+      return;
+    }
+
+    setUploading(true);
+    setUploadMessage('');
+    setShowMessage(false);
+    const deleteImageUseCase = diContainer.getDeleteImageUseCase();
+
+    try {
+      // Use requestAnimationFrame to ensure the loading state is rendered
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 50);
+        });
+      });
+
+      console.log('Starting bulk delete of', uploadedImages.length, 'images');
+
+      // Process deletions sequentially to avoid potential race conditions
+      const results = [];
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 0; i < uploadedImages.length; i++) {
+        const image = uploadedImages[i];
+        console.log(
+          `Deleting image ${i + 1}/${uploadedImages.length}: ${image.uploadedImageId}`,
+        );
+
+        try {
+          const result = await deleteImageUseCase.execute(
+            image.uploadedImageId!,
+          );
+          results.push(result);
+
+          if ('code' in result) {
+            console.log(
+              `Delete failed for image ${image.uploadedImageId}:`,
+              result,
+            );
+            failCount++;
+          } else {
+            console.log(`Delete succeeded for image ${image.uploadedImageId}`);
+            successCount++;
+          }
+        } catch (error) {
+          console.error(
+            `Error deleting image ${image.uploadedImageId}:`,
+            error,
+          );
+          results.push({ code: 'ERROR', message: 'Delete failed' });
+          failCount++;
+        }
+      }
+
+      console.log(
+        `Bulk delete completed: ${successCount} success, ${failCount} failed`,
+      );
+
+      if (failCount === 0) {
+        // All deletes successful - reload gallery status
+        const getGalleryImagesUseCase =
+          diContainer.getGetGalleryImagesUseCase();
+        const getUploadedFilesStatusUseCase =
+          diContainer.getGetUploadedFilesStatusUseCase();
+
+        const galleryResult = await getGalleryImagesUseCase.execute(15);
+        setGallery(galleryResult);
+
+        const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
+          galleryResult.images,
+        );
+        setImagesWithUploadStatus(imagesWithStatus);
+
+        setSelectedImages([]);
+        setSelectionMode(false);
+        setUploadMessage(
+          `${successCount} images deleted from server successfully!`,
+        );
+      } else {
+        setUploadMessage(
+          `${failCount} images failed to delete. ${successCount} deleted successfully.`,
+        );
+      }
+
+      setTimeout(() => {
+        setUploadMessage('');
+      }, 3000);
+    } catch (error) {
+      console.error('Error deleting images:', error);
+      setUploadMessage('Error deleting images. Please try again.');
+      setTimeout(() => {
+        setUploadMessage('');
+      }, 5000);
+    } finally {
+      setUploading(false);
+    }
+  }, [selectedImages]);
 
   const uploadSelectedImages = useCallback(async () => {
     const nonUploadedImages = selectedImages.filter((img) => !img.isUploaded);
@@ -372,7 +509,9 @@ export function ImageSelector() {
                   color: 'rgba(255, 255, 255, 0.7)',
                 }}
               >
-                Tap to select more, or upload now
+                {selectedImages.length > 0 && selectedImages[0].isUploaded
+                  ? 'Selected for deletion from server'
+                  : 'Tap to select more, or upload now'}
               </text>
             </view>
 
@@ -383,13 +522,23 @@ export function ImageSelector() {
                 gap: '12px',
               }}
             >
-              <LoadingButton
-                text="Upload"
-                loadingText="Uploading..."
-                loading={uploading}
-                onTap={uploadSelectedImages}
-                variant="primary"
-              />
+              {selectedImages.length > 0 && selectedImages[0].isUploaded ? (
+                <LoadingButton
+                  text="Delete"
+                  loadingText="Deleting..."
+                  loading={uploading}
+                  onTap={deleteSelectedImages}
+                  variant="danger"
+                />
+              ) : (
+                <LoadingButton
+                  text="Upload"
+                  loadingText="Uploading..."
+                  loading={uploading}
+                  onTap={uploadSelectedImages}
+                  variant="primary"
+                />
+              )}
 
               <view
                 style={{
@@ -512,6 +661,7 @@ export function ImageSelector() {
                       image.id,
                       image.metadata?.name,
                       imageWithStatus.isUploaded,
+                      imageWithStatus.uploadedImageId,
                     )
                   }
                   bindlongpress={() =>
