@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
 import { useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
+import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
+import { LoadingButton } from '../../../components/LoadingButton.js';
 import type { Gallery } from '../domain/entities.js';
 
 interface SelectedImage {
@@ -81,6 +83,13 @@ export function ImageSelector() {
     const uploadImageUseCase = diContainer.getUploadImageUseCase();
 
     try {
+      // Use requestAnimationFrame to ensure the loading state is rendered
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 50); // Small delay to ensure UI updates
+        });
+      });
+
       const uploadPromises = selectedImages.map((image, index) =>
         uploadImageUseCase.execute(
           image.url,
@@ -127,24 +136,7 @@ export function ImageSelector() {
           backgroundColor: '#000',
         }}
       >
-        <view
-          style={{
-            padding: '40px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          <text
-            style={{
-              fontSize: '18px',
-              color: '#fff',
-              textAlign: 'center',
-            }}
-          >
-            Loading gallery...
-          </text>
-        </view>
+        <LoadingSpinner size="large" color="#fff" text="Loading gallery..." />
       </view>
     );
   }
@@ -243,30 +235,13 @@ export function ImageSelector() {
                 gap: '12px',
               }}
             >
-              <view
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: uploading
-                    ? 'rgba(59, 130, 246, 0.5)'
-                    : 'rgba(59, 130, 246, 0.9)',
-                  borderRadius: '25px',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-                  backdropFilter: 'blur(10px)',
-                  minWidth: '80px',
-                }}
-                bindtap={uploadSelectedImages}
-              >
-                <text
-                  style={{
-                    color: '#fff',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textAlign: 'center',
-                  }}
-                >
-                  {uploading ? 'Uploading...' : 'Upload'}
-                </text>
-              </view>
+              <LoadingButton
+                text="Upload"
+                loadingText="Uploading..."
+                loading={uploading}
+                onTap={uploadSelectedImages}
+                variant="primary"
+              />
 
               <view
                 style={{

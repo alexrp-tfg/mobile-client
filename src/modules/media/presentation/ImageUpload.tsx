@@ -2,6 +2,8 @@ import { useState } from '@lynx-js/react';
 import { useLocation, useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
 import { MediaUploadError, MediaUploadResult } from '../domain/entities.js';
+import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
+import { LoadingButton } from '../../../components/LoadingButton.js';
 import './ImageUpload.css';
 
 export function ImageUpload() {
@@ -17,6 +19,7 @@ export function ImageUpload() {
   const fileName = location.state?.fileName;
 
   const handleImageUpload = async () => {
+    console.log('Starting image upload...');
     if (!imageUrl) {
       setUploadResult(null);
       return;
@@ -24,18 +27,33 @@ export function ImageUpload() {
 
     setLoading(true);
     setUploadResult(null);
+    console.log('Loading is true');
 
     try {
+      // Use requestAnimationFrame to ensure the loading state is rendered
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          setTimeout(resolve, 50); // Small delay to ensure UI updates
+        });
+      });
+
       const result = await uploadImageUseCase.execute(
         imageUrl,
         fileName || 'image.jpg',
         'image/jpeg',
       );
+
       setUploadResult(result);
-    } catch {
+
+      if (result instanceof MediaUploadError) {
+        setUploadResult(null);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
       setUploadResult(null);
     } finally {
       setLoading(false);
+      console.log('Loading is false');
     }
   };
 
@@ -44,7 +62,7 @@ export function ImageUpload() {
   };
 
   const handleBackToGallery = () => {
-    navigate('/gallery');
+    navigate(-1);
   };
 
   if (!imageUrl) {
@@ -69,6 +87,12 @@ export function ImageUpload() {
     );
   }
 
+  console.log(
+    'Rendering with uplading status and result:',
+    loading,
+    uploadResult,
+  );
+
   return (
     <view className="image-upload-container">
       <view className="image-upload-header">
@@ -87,20 +111,27 @@ export function ImageUpload() {
               mode="aspectFit"
               placeholder="Loading image..."
               className="image-upload-image"
+              style={{ opacity: loading ? 0.7 : 1 }}
             />
           )}
           {loading && (
-            <view className="image-upload-loading">
-              <text>Uploading...</text>
-            </view>
+            <LoadingSpinner
+              overlay={true}
+              text="Uploading to server..."
+              color="#007bff"
+            />
           )}
         </view>
 
         <view className="image-upload-actions">
-          {!uploadResult && !loading && (
-            <view className="image-upload-button" bindtap={handleImageUpload}>
-              <text>Upload to Server</text>
-            </view>
+          {!uploadResult && (
+            <LoadingButton
+              text="Upload to Server"
+              loadingText="Uploading..."
+              loading={loading}
+              onTap={handleImageUpload}
+              className="image-upload-button"
+            />
           )}
 
           {uploadResult instanceof MediaUploadResult && (

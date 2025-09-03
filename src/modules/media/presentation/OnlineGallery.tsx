@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
 import { APP_CONFIG } from '../../../config/app.config.js';
 import { MediaDeleteError, MediaDeleteResult } from '../domain/entities.js';
+import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
 import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
 
 interface SelectedImage {
@@ -151,24 +152,11 @@ export function OnlineGallery() {
           backgroundColor: '#000',
         }}
       >
-        <view
-          style={{
-            padding: '40px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          <text
-            style={{
-              fontSize: '18px',
-              color: '#fff',
-              textAlign: 'center',
-            }}
-          >
-            Loading online gallery...
-          </text>
-        </view>
+        <LoadingSpinner
+          size="large"
+          color="#fff"
+          text="Loading online gallery..."
+        />
       </view>
     );
   }
@@ -422,7 +410,7 @@ export function OnlineGallery() {
                 border: '1px solid rgba(107, 114, 128, 0.3)',
                 backdropFilter: 'blur(10px)',
               }}
-              bindtap={() => navigate('/gallery')}
+              bindtap={() => navigate(-1)}
             >
               <text
                 style={{

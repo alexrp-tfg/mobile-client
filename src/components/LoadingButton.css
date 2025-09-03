@@ -1,0 +1,89 @@
+/* Loading Button Styles */
+.loading-button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #007bff;
+  color: white;
+}
+
+.loading-button:hover {
+  background-color: #0056b3;
+}
+
+.loading-button--loading {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+  cursor: not-allowed;
+  opacity: 0.9;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-button--loading:hover {
+  background-color: #ffc107 !important;
+}
+
+.loading-button--disabled {
+  background-color: #6c757d !important;
+  color: white !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.loading-button--secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.loading-button--secondary:hover {
+  background-color: #5a6268;
+}
+
+.loading-button--danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.loading-button--danger:hover {
+  background-color: #c82333;
+}
+
+.loading-button--warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.loading-button--warning:hover {
+  background-color: #e0a800;
+}
+
+.loading-button__spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-button__text {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}

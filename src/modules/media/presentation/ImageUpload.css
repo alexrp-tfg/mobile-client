@@ -53,6 +53,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .image-upload-image {
@@ -110,6 +111,35 @@
 
 .image-upload-button.secondary:hover {
   background-color: #5a6268;
+}
+
+.image-upload-button.loading {
+  background-color: #ffc107;
+  color: #212529;
+  cursor: not-allowed;
+  opacity: 0.8;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .image-upload-actions-row {
