@@ -22,3 +22,10 @@ export class HttpResponse<T> {
     return new HttpResponse<T>(null, error, false);
   }
 }
+
+// Image data from native storage
+export interface ImageData {
+  name: string;
+  contentUri: string;
+  size: number;
+}

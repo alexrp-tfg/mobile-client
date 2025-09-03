@@ -5,13 +5,21 @@ import { Gallery, GalleryImage } from '../../domain/entities.js';
 export class GalleryRepository implements IGalleryRepository {
   constructor(private readonly storageService: IStorageService) {}
 
-  async getLocalImages(limit: number = 5): Promise<Gallery> {
+  async getLocalImages(
+    limit: number = 5,
+    offset: number = 0,
+  ): Promise<Gallery> {
     try {
-      const imageUrls = this.storageService.getImages();
-      const limitedUrls = imageUrls.slice(0, limit);
+      const imageData = this.storageService.getImages(limit, offset);
 
-      const galleryImages = limitedUrls.map(
-        (url: string, index: number) => new GalleryImage(`image-${index}`, url),
+      const galleryImages = imageData.map(
+        (data, index) =>
+          new GalleryImage(
+            `image-${offset + index}`,
+            data.contentUri,
+            undefined,
+            data,
+          ),
       );
 
       return new Gallery(galleryImages, galleryImages.length);
@@ -23,11 +31,12 @@ export class GalleryRepository implements IGalleryRepository {
 
   async getImageById(id: string): Promise<GalleryImage | null> {
     try {
-      const imageUrls = this.storageService.getImages();
+      const imageData = this.storageService.getImages();
       const index = parseInt(id.replace('image-', ''), 10);
 
-      if (index >= 0 && index < imageUrls.length) {
-        return new GalleryImage(id, imageUrls[index]);
+      if (index >= 0 && index < imageData.length) {
+        const data = imageData[index];
+        return new GalleryImage(id, data.contentUri, undefined, data);
       }
 
       return null;

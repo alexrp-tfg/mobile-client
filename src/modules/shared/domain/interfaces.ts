@@ -1,4 +1,4 @@
-import type { HttpResponse } from './entities.js';
+import type { HttpResponse, ImageData } from './entities.js';
 
 // Interface for HTTP services
 export interface IHttpService {
@@ -20,7 +20,7 @@ export interface IHttpService {
 
 // Interface for local storage services
 export interface IStorageService {
-  getImages(): string[];
+  getImages(limit?: number, offset?: number): ImageData[];
   getImageAsUint8Array(imageUrl: string): Uint8Array | null;
 }
 

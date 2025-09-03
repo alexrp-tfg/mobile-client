@@ -14,6 +14,7 @@ export function ImageUpload() {
 
   const uploadImageUseCase = diContainer.getUploadImageUseCase();
   const imageUrl = location.state?.imageUrl;
+  const fileName = location.state?.fileName;
 
   const handleImageUpload = async () => {
     if (!imageUrl) {
@@ -27,7 +28,7 @@ export function ImageUpload() {
     try {
       const result = await uploadImageUseCase.execute(
         imageUrl,
-        'image.jpg',
+        fileName || 'image.jpg',
         'image/jpeg',
       );
       setUploadResult(result);

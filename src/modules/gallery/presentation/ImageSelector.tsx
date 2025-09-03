@@ -6,6 +6,7 @@ import type { Gallery } from '../domain/entities.js';
 interface SelectedImage {
   id: string;
   url: string;
+  fileName?: string;
 }
 
 export function ImageSelector() {
@@ -36,7 +37,7 @@ export function ImageSelector() {
   }, []);
 
   const toggleImageSelection = useCallback(
-    (imageId: string, imageUrl: string) => {
+    (imageId: string, imageUrl: string, fileName?: string) => {
       setSelectedImages((prev) => {
         const isSelected = prev.some((img) => img.id === imageId);
         if (isSelected) {
@@ -46,7 +47,7 @@ export function ImageSelector() {
           }
           return newSelection;
         } else {
-          return [...prev, { id: imageId, url: imageUrl }];
+          return [...prev, { id: imageId, url: imageUrl, fileName }];
         }
       });
     },
@@ -54,20 +55,20 @@ export function ImageSelector() {
   );
 
   const handleImageTap = useCallback(
-    (imageUrl: string, imageId: string) => {
+    (imageUrl: string, imageId: string, fileName?: string) => {
       if (!selectionMode) {
-        nav('/upload', { state: { imageUrl } });
+        nav('/upload', { state: { imageUrl, fileName } });
       } else {
-        toggleImageSelection(imageId, imageUrl);
+        toggleImageSelection(imageId, imageUrl, fileName);
       }
     },
     [nav, selectionMode, toggleImageSelection],
   );
 
   const handleImageLongPress = useCallback(
-    (imageId: string, imageUrl: string) => {
+    (imageId: string, imageUrl: string, fileName?: string) => {
       setSelectionMode(true);
-      toggleImageSelection(imageId, imageUrl);
+      toggleImageSelection(imageId, imageUrl, fileName);
     },
     [toggleImageSelection],
   );
@@ -83,7 +84,7 @@ export function ImageSelector() {
       const uploadPromises = selectedImages.map((image, index) =>
         uploadImageUseCase.execute(
           image.url,
-          `selected_image_${index + 1}.jpg`,
+          image.fileName || `selected_image_${index + 1}.jpg`,
           'image/jpeg',
         ),
       );
@@ -375,9 +376,15 @@ export function ImageSelector() {
                 <view
                   key={image.id}
                   className={`gallery-item ${isSelected ? 'gallery-item--selected' : 'gallery-item--normal'}`}
-                  bindtap={() => handleImageTap(image.url, image.id)}
+                  bindtap={() =>
+                    handleImageTap(image.url, image.id, image.metadata?.name)
+                  }
                   bindlongpress={() =>
-                    handleImageLongPress(image.id, image.url)
+                    handleImageLongPress(
+                      image.id,
+                      image.url,
+                      image.metadata?.name,
+                    )
                   }
                 >
                   <image

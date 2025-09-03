@@ -1,9 +1,10 @@
 import type { IStorageService } from '../../domain/interfaces.js';
+import type { ImageData } from '../../domain/entities.js';
 
 export class StorageService implements IStorageService {
-  getImages(): string[] {
+  getImages(limit?: number, offset?: number): ImageData[] {
     try {
-      return NativeModules.NativeLocalStorageModule.getImages();
+      return NativeModules.NativeLocalStorageModule.getImages(limit, offset);
     } catch (error) {
       console.error('Error getting images from storage:', error);
       return [];
