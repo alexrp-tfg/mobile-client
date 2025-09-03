@@ -434,7 +434,9 @@ export function OnlineGallery() {
       )}
 
       {/* Main Content */}
-      <scroll-view
+      <list
+        list-type="flow"
+        span-count={2}
         scroll-orientation="vertical"
         style={{
           width: '100%',
@@ -445,156 +447,159 @@ export function OnlineGallery() {
       >
         {/* Image Grid */}
         {images.length > 0 ? (
-          <view className="gallery-grid">
-            {images.map((image) => {
-              const isSelected = selectedImages.some(
-                (selected) => selected.id === image.id,
-              );
+          images.map((image) => {
+            const isSelected = selectedImages.some(
+              (selected) => selected.id === image.id,
+            );
 
-              return (
-                <view
-                  key={image.id}
-                  className={`gallery-item ${isSelected ? 'gallery-item--selected' : 'gallery-item--normal'}`}
-                  bindtap={() =>
-                    handleImageTap(image.id, getImageUrl(image.id))
-                  }
-                  bindlongpress={() =>
-                    handleImageLongPress(image.id, getImageUrl(image.id))
-                  }
-                >
-                  <image
-                    src={getImageUrl(image.id)}
-                    placeholder="Loading..."
-                    mode="aspectFill"
+            return (
+              <list-item
+                style={{
+                  width: '100%',
+                }}
+                key={image.id}
+                item-key={image.id}
+                className={`gallery-item ${isSelected ? 'gallery-item--selected' : 'gallery-item--normal'}`}
+                bindtap={() => handleImageTap(image.id, getImageUrl(image.id))}
+                bindlongpress={() =>
+                  handleImageLongPress(image.id, getImageUrl(image.id))
+                }
+              >
+                <image
+                  src={getImageUrl(image.id)}
+                  placeholder="Loading..."
+                  mode="aspectFill"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: isSelected ? 0.7 : 1,
+                    transition: 'opacity 0.2s ease',
+                  }}
+                />
+
+                {/* Selection Overlay */}
+                {isSelected && (
+                  <view
                     style={{
-                      width: '100%',
-                      height: '100%',
-                      opacity: isSelected ? 0.7 : 1,
-                      transition: 'opacity 0.2s ease',
+                      position: 'absolute',
+                      top: '0',
+                      left: '0',
+                      right: '0',
+                      bottom: '0',
+                      backgroundColor: 'rgba(220, 38, 127, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
-                  />
-
-                  {/* Selection Overlay */}
-                  {isSelected && (
+                  >
                     <view
                       style={{
-                        position: 'absolute',
-                        top: '0',
-                        left: '0',
-                        right: '0',
-                        bottom: '0',
-                        backgroundColor: 'rgba(220, 38, 127, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <view
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          backgroundColor: 'rgba(220, 38, 127, 0.9)',
-                          borderRadius: '16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '2px solid #fff',
-                          backdropFilter: 'blur(10px)',
-                        }}
-                      >
-                        <text
-                          style={{
-                            color: '#fff',
-                            fontSize: '16px',
-                            fontWeight: '700',
-                          }}
-                        >
-                          ✓
-                        </text>
-                      </view>
-                    </view>
-                  )}
-
-                  {/* Selection Badge */}
-                  {isSelected && (
-                    <view
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        width: '24px',
-                        height: '24px',
+                        width: '32px',
+                        height: '32px',
                         backgroundColor: 'rgba(220, 38, 127, 0.9)',
-                        borderRadius: '12px',
+                        borderRadius: '16px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         border: '2px solid #fff',
+                        backdropFilter: 'blur(10px)',
                       }}
                     >
                       <text
                         style={{
                           color: '#fff',
-                          fontSize: '12px',
+                          fontSize: '16px',
                           fontWeight: '700',
                         }}
                       >
-                        {selectedImages.findIndex(
-                          (img) => img.id === image.id,
-                        ) + 1}
+                        ✓
                       </text>
                     </view>
-                  )}
-                </view>
-              );
-            })}
-          </view>
+                  </view>
+                )}
+
+                {/* Selection Badge */}
+                {isSelected && (
+                  <view
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '24px',
+                      height: '24px',
+                      backgroundColor: 'rgba(220, 38, 127, 0.9)',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px solid #fff',
+                    }}
+                  >
+                    <text
+                      style={{
+                        color: '#fff',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                      }}
+                    >
+                      {selectedImages.findIndex((img) => img.id === image.id) +
+                        1}
+                    </text>
+                  </view>
+                )}
+              </list-item>
+            );
+          })
         ) : (
-          <view
-            style={{
-              padding: '60px 20px',
-              textAlign: 'center',
-            }}
-          >
-            <text
+          <list-item key="empty" item-key="empty" full-span={true}>
+            <view
               style={{
-                fontSize: '18px',
-                color: 'rgba(255, 255, 255, 0.6)',
-                marginBottom: '8px',
+                padding: '60px 20px',
+                textAlign: 'center',
               }}
             >
-              No Images Uploaded
-            </text>
-            <text
-              style={{
-                fontSize: '14px',
-                color: 'rgba(255, 255, 255, 0.4)',
-              }}
-            >
-              Upload some images to see them here
-            </text>
-          </view>
+              <text
+                style={{
+                  fontSize: '18px',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  marginBottom: '8px',
+                }}
+              >
+                No Images Uploaded
+              </text>
+              <text
+                style={{
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                }}
+              >
+                Upload some images to see them here
+              </text>
+            </view>
+          </list-item>
         )}
 
         {/* Footer */}
         {images.length > 0 && (
-          <view
-            style={{
-              padding: '40px 20px 20px',
-              textAlign: 'center',
-            }}
-          >
-            <text
+          <list-item key="footer" item-key="footer" full-span={true}>
+            <view
               style={{
-                fontSize: '12px',
-                color: 'rgba(255, 255, 255, 0.4)',
+                padding: '40px 20px 20px',
+                textAlign: 'center',
               }}
             >
-              Lynx Online Gallery
-            </text>
-          </view>
+              <text
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                }}
+              >
+                Lynx Online Gallery
+              </text>
+            </view>
+          </list-item>
         )}
-      </scroll-view>
+      </list>
 
       {/* Modal for viewing full image */}
       {selectedImage && (
