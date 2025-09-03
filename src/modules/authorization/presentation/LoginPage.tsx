@@ -24,7 +24,7 @@ export function LoginPage() {
       const success = await loginUserUseCase.execute(username.trim(), password);
 
       if (success) {
-        navigate('/gallery');
+        navigate('/', { replace: true });
       } else {
         setError('Invalid credentials. Please try again.');
       }

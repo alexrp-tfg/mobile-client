@@ -10,11 +10,13 @@ export class HttpService implements IHttpService {
 
   constructor(baseUrl: string, authToken: string) {
     this.baseUrl = baseUrl;
+    // TODO: Move this to DI container
+    this.authManager = AuthManager.getInstance();
+    authToken = this.authManager.getState().token ?? authToken;
+
     this.defaultHeaders = {
       Authorization: `Bearer ${authToken}`,
     };
-    // TODO: Move this to DI container
-    this.authManager = AuthManager.getInstance();
   }
 
   async login(username: string, password: string): Promise<boolean> {

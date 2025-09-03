@@ -4,6 +4,7 @@ import { diContainer } from '../../../di/container.js';
 import { APP_CONFIG } from '../../../config/app.config.js';
 import { MediaDeleteError, MediaDeleteResult } from '../domain/entities.js';
 import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
+import { LogoutButton } from '../../../components/LogoutButton.js';
 import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
 
 interface SelectedImage {
@@ -422,6 +423,12 @@ export function OnlineGallery() {
                 ← Local Gallery
               </text>
             </view>
+
+            <LogoutButton
+              text="Logout"
+              variant="secondary"
+              redirectTo="/login"
+            />
           </view>
         </view>
       )}

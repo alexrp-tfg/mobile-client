@@ -16,6 +16,7 @@ import { GetGalleryImagesUseCase } from '../modules/gallery/application/use-case
 
 // Authentication Module
 import { LoginUserUseCase } from '../modules/authorization/application/use-cases/login-user.js';
+import { LogoutUserUseCase } from '../modules/authorization/application/use-cases/logout-user.js';
 
 // Interfaces
 import type {
@@ -51,6 +52,7 @@ class DIContainer {
 
   // Authentication Services
   private loginUserUseCase: LoginUserUseCase;
+  private logoutUserUseCase: LogoutUserUseCase;
 
   private constructor() {
     // Initialize shared services
@@ -81,6 +83,7 @@ class DIContainer {
 
     // Initialize authentication services
     this.loginUserUseCase = new LoginUserUseCase(this.httpService);
+    this.logoutUserUseCase = new LogoutUserUseCase();
   }
 
   static getInstance(): DIContainer {
@@ -114,6 +117,10 @@ class DIContainer {
 
   getLoginUserUseCase(): LoginUserUseCase {
     return this.loginUserUseCase;
+  }
+
+  getLogoutUserUseCase(): LogoutUserUseCase {
+    return this.logoutUserUseCase;
   }
 
   getGetUserAllImagesUseCase(): GetUserAllImagesUseCase {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
 import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
 import { LoadingButton } from '../../../components/LoadingButton.js';
+import { LogoutButton } from '../../../components/LogoutButton.js';
 import type { Gallery } from '../domain/entities.js';
 
 interface SelectedImage {
@@ -18,6 +19,7 @@ export function ImageSelector() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string>('');
+  const [showMessage, setShowMessage] = useState(false);
   const nav = useNavigate();
 
   useEffect(() => {
@@ -37,6 +39,19 @@ export function ImageSelector() {
 
     loadGallery();
   }, []);
+
+  // Handle message visibility transitions
+  useEffect(() => {
+    if (uploadMessage) {
+      setShowMessage(true);
+    } else {
+      // Delay hiding to allow fade-out transition
+      const timer = setTimeout(() => {
+        setShowMessage(false);
+      }, 300); // Match the transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [uploadMessage]);
 
   const toggleImageSelection = useCallback(
     (imageId: string, imageUrl: string, fileName?: string) => {
@@ -80,6 +95,7 @@ export function ImageSelector() {
 
     setUploading(true);
     setUploadMessage('');
+    setShowMessage(false);
     const uploadImageUseCase = diContainer.getUploadImageUseCase();
 
     try {
@@ -106,11 +122,15 @@ export function ImageSelector() {
         `${uploadPromises.length} images uploaded successfully!`,
       );
 
-      setTimeout(() => setUploadMessage(''), 3000);
+      setTimeout(() => {
+        setUploadMessage('');
+      }, 3000);
     } catch (error) {
       console.error('Error uploading images:', error);
       setUploadMessage('Error uploading images. Please try again.');
-      setTimeout(() => setUploadMessage(''), 5000);
+      setTimeout(() => {
+        setUploadMessage('');
+      }, 5000);
     } finally {
       setUploading(false);
     }
@@ -151,7 +171,6 @@ export function ImageSelector() {
       }}
     >
       {/* Status Message */}
-      {uploadMessage && (
         <view
           style={{
             position: 'absolute',
@@ -168,6 +187,11 @@ export function ImageSelector() {
             border: uploadMessage.includes('Error')
               ? '1px solid rgba(220, 38, 127, 0.3)'
               : '1px solid rgba(34, 197, 94, 0.3)',
+            opacity: showMessage && uploadMessage ? 1 : 0,
+            transform: showMessage ? 'translateY(0)' : 'translateY(-20px)',
+            transition: 'opacity 0.3s ease, transform 0.3s ease',
+            visibility: showMessage ? 'visible' : 'hidden',
+            pointerEvents: showMessage ? 'auto' : 'none',
           }}
         >
           <text
@@ -181,7 +205,6 @@ export function ImageSelector() {
             {uploadMessage}
           </text>
         </view>
-      )}
 
       {/* Selection Header */}
       {selectionMode && (
@@ -332,9 +355,15 @@ export function ImageSelector() {
                     fontWeight: '600',
                   }}
                 >
-                  View Online Gallery
+                  Online Gallery
                 </text>
               </view>
+
+              <LogoutButton
+                text="Logout"
+                variant="secondary"
+                redirectTo="/login"
+              />
             </view>
           </view>
         )}
