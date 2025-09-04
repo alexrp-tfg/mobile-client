@@ -77,10 +77,13 @@ export function ImageSelector() {
         imageIndex: number,
       ): Promise<void> => {
         try {
+          // Get file extension from URL if possible
+          const urlParts = image.fileName?.split('.') ?? image.url.split('.');
+          const extension = urlParts.length > 1 ? urlParts.pop() : 'jpg';
           const result = await uploadImageUseCase.execute(
             image.url,
             image.fileName || `selected_image_${imageIndex + 1}.jpg`,
-            'image/jpeg',
+            'image/' + extension,
           );
 
           // Check if result is an error (MediaUploadError has 'code' property)

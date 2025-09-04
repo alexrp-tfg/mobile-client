@@ -87,9 +87,9 @@ export function ServerStatus({
   };
 
   const getStatusText = () => {
-    if (isChecking) return 'Checking...';
-    if (isOnline === null) return 'Unknown';
-    return isOnline ? 'Online' : 'Offline';
+    if (isChecking) return 'Checking server status...';
+    if (isOnline === null) return 'Unknown server status';
+    return isOnline ? 'Server Online' : 'Server Offline';
   };
 
   const getStatusIcon = () => {
@@ -114,7 +114,7 @@ export function ServerStatus({
         }}
         bindtap={performHealthCheck}
       >
-        <text style={{ fontSize: '10px' }}>{getStatusIcon()}</text>
+        <text style={{ fontSize: '15px' }}>{getStatusIcon()}</text>
         <text
           style={{
             color: '#fff',
