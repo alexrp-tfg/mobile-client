@@ -1,6 +1,6 @@
 import { useState } from '@lynx-js/react';
 import { useNavigate } from 'react-router';
-import { diContainer } from '../di/container.js';
+import { diContainer } from '../../../di/container.js';
 import { LoadingButton } from './LoadingButton.js';
 
 interface LogoutButtonProps {

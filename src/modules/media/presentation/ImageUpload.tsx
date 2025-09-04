@@ -2,8 +2,8 @@ import { useState, useEffect } from '@lynx-js/react';
 import { useLocation, useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
 import { MediaUploadError, MediaUploadResult } from '../domain/entities.js';
-import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
-import { LoadingButton } from '../../../components/LoadingButton.js';
+import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
+import { LoadingButton } from '../../shared/presentation/LoadingButton.js';
 import './ImageUpload.css';
 
 export function ImageUpload() {

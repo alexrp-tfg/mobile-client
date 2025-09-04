@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from '@lynx-js/react';
-import { LogoutButton } from '../../components/LogoutButton.js';
+import { LogoutButton } from '../shared/presentation/LogoutButton.js';
 
 interface UploadSettings {
   maxParallelUploads: number;

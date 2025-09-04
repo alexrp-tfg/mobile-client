@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
 import { useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
-import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
-import { LoadingButton } from '../../../components/LoadingButton.js';
+import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
+import { LoadingButton } from '../../shared/presentation/LoadingButton.js';
+import { RefreshButton } from '../../shared/presentation/RefreshButton.js';
 import type { Gallery } from '../domain/entities.js';
 import type { GalleryImageWithUploadStatus } from '../application/use-cases/GetUploadedFilesStatusUseCase.js';
 import type { UploadImageUseCase } from '../../media/application/use-cases/UploadImageUseCase.js';
@@ -63,7 +64,10 @@ export function ImageSelector() {
       let failCount = 0;
       let currentIndex = 0;
 
-      const processImage = async (image: SelectedImage, imageIndex: number): Promise<void> => {
+      const processImage = async (
+        image: SelectedImage,
+        imageIndex: number,
+      ): Promise<void> => {
         try {
           const result = await uploadImageUseCase.execute(
             image.url,
@@ -96,7 +100,7 @@ export function ImageSelector() {
         while (currentIndex < images.length) {
           const imageIndex = currentIndex++;
           const image = images[imageIndex];
-          
+
           if (image) {
             await processImage(image, imageIndex);
           }
@@ -104,8 +108,9 @@ export function ImageSelector() {
       };
 
       // Start exactly maxConcurrent workers
-      const workers = Array.from({ length: Math.min(maxConcurrent, images.length) }, () =>
-        processNext()
+      const workers = Array.from(
+        { length: Math.min(maxConcurrent, images.length) },
+        () => processNext(),
       );
 
       await Promise.all(workers);
@@ -115,31 +120,32 @@ export function ImageSelector() {
     [],
   );
 
-  useEffect(() => {
+  const loadGallery = useCallback(async () => {
     const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
     const getUploadedFilesStatusUseCase =
       diContainer.getGetUploadedFilesStatusUseCase();
 
-    const loadGallery = async () => {
-      setLoading(true);
-      try {
-        const galleryResult = await getGalleryImagesUseCase.execute(15);
-        setGallery(galleryResult);
+    setLoading(true);
+    try {
+      const galleryResult = await getGalleryImagesUseCase.execute(15);
+      setGallery(galleryResult);
 
-        // Check upload status for all images
-        const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
-          galleryResult.images,
-        );
-        setImagesWithUploadStatus(imagesWithStatus);
-      } catch (error) {
-        console.error('Error loading gallery:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGallery();
+      // Check upload status for all images
+      const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
+        galleryResult.images,
+      );
+      setImagesWithUploadStatus(imagesWithStatus);
+      console.log('Loaded gallery with images:', imagesWithStatus);
+    } catch (error) {
+      console.error('Error loading gallery:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadGallery();
+  }, [loadGallery]);
 
   // Handle message visibility transitions
   useEffect(() => {
@@ -705,8 +711,21 @@ export function ImageSelector() {
             style={{
               padding: '20px',
               textAlign: 'center',
+              position: 'relative',
             }}
           >
+            {/* Refresh Button - Top Right */}
+            <view
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                zIndex: 10,
+              }}
+            >
+              <RefreshButton onRefresh={loadGallery} disabled={loading} />
+            </view>
+
             <text
               style={{
                 fontSize: '24px',

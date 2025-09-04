@@ -1,5 +1,5 @@
 import { useState, useEffect } from '@lynx-js/react';
-import { DatabaseHelper } from '../utils/DatabaseHelper.js';
+import { DatabaseHelper } from '../../../utils/DatabaseHelper.js';
 
 export function DatabaseDemo() {
   const [theme, setTheme] = useState<string>('light');

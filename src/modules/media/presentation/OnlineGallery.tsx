@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from '@lynx-js/react';
 import { diContainer } from '../../../di/container.js';
 import { APP_CONFIG } from '../../../config/app.config.js';
 import { MediaDeleteError, MediaDeleteResult } from '../domain/entities.js';
-import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
+import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
 import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
 
 interface SelectedImage {
