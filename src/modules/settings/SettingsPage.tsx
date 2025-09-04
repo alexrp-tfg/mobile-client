@@ -135,7 +135,6 @@ export function SettingsPage() {
         style={{
           width: '100%',
           height: '100%',
-          paddingTop: '20px',
         }}
       >
         {/* Header */}
@@ -248,6 +247,9 @@ export function SettingsPage() {
 
               <view
                 style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   padding: '8px 20px',
                   backgroundColor: 'rgba(59, 130, 246, 0.9)',
                   borderRadius: '20px',
@@ -344,10 +346,11 @@ export function SettingsPage() {
                   width: '26px',
                   height: '26px',
                   backgroundColor: '#fff',
-                  borderRadius: '13px',
+                  borderRadius: '15px',
                   position: 'absolute',
-                  top: '2px',
-                  left: settings.autoUpload ? '22px' : '2px',
+                  top: '1px',
+                  left: settings.autoUpload ? 'auto' : '2px',
+                  right: settings.autoUpload ? '2px' : 'auto',
                   transition: 'left 0.2s ease',
                   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
                 }}
@@ -362,12 +365,13 @@ export function SettingsPage() {
             margin: '20px',
             display: 'flex',
             flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
             gap: '12px',
           }}
         >
           <view
             style={{
-              flex: 1,
               padding: '16px',
               backgroundColor: loading
                 ? 'rgba(107, 114, 128, 0.5)'
