@@ -29,6 +29,7 @@ export function ImageSelector() {
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [autoUploading, setAutoUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string>('');
   const [showMessage, setShowMessage] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
@@ -120,6 +121,57 @@ export function ImageSelector() {
     [],
   );
 
+  // Auto upload function for background uploads - completely non-blocking
+  const triggerAutoUpload = useCallback(
+    async (autoUploadImages: SelectedImage[]) => {
+      if (autoUploadImages.length === 0) return;
+
+      console.log(
+        `Starting background auto upload for ${autoUploadImages.length} images`,
+      );
+
+      // Set auto upload state without affecting main UI
+      setAutoUploading(true);
+
+      // Use setTimeout to ensure this runs after the main UI has updated
+      setTimeout(async () => {
+        try {
+          const settings = getUploadSettings();
+          const uploadImageUseCase = diContainer.getUploadImageUseCase();
+
+          // Process uploads with parallel limit - don't block UI
+          const { successCount, failCount } = await processUploadsWithLimit(
+            autoUploadImages,
+            Math.min(settings.maxParallelUploads, 2), // Limit auto upload concurrency for better performance
+            uploadImageUseCase,
+            (imageId: string, status: 'success' | 'error') => {
+              // Update the images with upload status immediately for success
+              if (status === 'success') {
+                setImagesWithUploadStatus((prevImages) =>
+                  prevImages.map((img) =>
+                    img.id === imageId ? { ...img, isUploaded: true } : img,
+                  ),
+                );
+              }
+            },
+          );
+
+          // Only show subtle completion message for auto upload
+          if (successCount > 0) {
+            console.log(
+              `Auto upload completed: ${successCount} images uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}`,
+            );
+          }
+        } catch (error) {
+          console.error('Error during auto upload:', error);
+        } finally {
+          setAutoUploading(false);
+        }
+      }, 100); // Small delay to let UI settle
+    },
+    [getUploadSettings, processUploadsWithLimit],
+  );
+
   const loadGallery = useCallback(async () => {
     const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
     const getUploadedFilesStatusUseCase =
@@ -142,6 +194,50 @@ export function ImageSelector() {
       setLoading(false);
     }
   }, []);
+
+  // Separate effect for auto upload to avoid blocking gallery loading
+  useEffect(() => {
+    // Only run auto upload after gallery has loaded and we have images
+    if (!loading && imagesWithUploadStatus.length > 0) {
+      const settings = getUploadSettings();
+      if (
+        settings.autoUpload &&
+        !selectionMode &&
+        !uploading &&
+        !autoUploading
+      ) {
+        const nonUploadedImages = imagesWithUploadStatus.filter(
+          (img) => !img.isUploaded,
+        );
+        if (nonUploadedImages.length > 0) {
+          console.log(
+            `Auto upload enabled: Found ${nonUploadedImages.length} images to upload`,
+          );
+
+          // Convert to SelectedImage format for auto upload
+          const autoUploadImages: SelectedImage[] = nonUploadedImages.map(
+            (img) => ({
+              id: img.id,
+              url: img.url,
+              fileName: img.metadata?.name,
+              isUploaded: false,
+            }),
+          );
+
+          // Trigger auto upload in background - completely non-blocking
+          triggerAutoUpload(autoUploadImages);
+        }
+      }
+    }
+  }, [
+    loading,
+    imagesWithUploadStatus,
+    selectionMode,
+    uploading,
+    autoUploading,
+    getUploadSettings,
+    triggerAutoUpload,
+  ]);
 
   useEffect(() => {
     loadGallery();
@@ -421,6 +517,15 @@ export function ImageSelector() {
   }, [selectedImages]);
 
   const uploadSelectedImages = useCallback(async () => {
+    // Prevent manual upload if auto upload is in progress
+    if (autoUploading) {
+      setUploadMessage('Auto upload in progress. Please wait and try again.');
+      setTimeout(() => {
+        setUploadMessage('');
+      }, 3000);
+      return;
+    }
+
     const nonUploadedImages = selectedImages.filter((img) => !img.isUploaded);
     if (nonUploadedImages.length === 0) {
       setUploadMessage(
@@ -523,7 +628,12 @@ export function ImageSelector() {
     } finally {
       setUploading(false);
     }
-  }, [selectedImages, getUploadSettings, processUploadsWithLimit]);
+  }, [
+    selectedImages,
+    getUploadSettings,
+    processUploadsWithLimit,
+    autoUploading,
+  ]);
 
   const cancelSelection = useCallback(() => {
     setSelectedImages([]);
