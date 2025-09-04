@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
 import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
 import { LoadingButton } from '../../../components/LoadingButton.js';
-import { LogoutButton } from '../../../components/LogoutButton.js';
 import type { Gallery } from '../domain/entities.js';
 import type { GalleryImageWithUploadStatus } from '../application/use-cases/GetUploadedFilesStatusUseCase.js';
+import type { UploadImageUseCase } from '../../media/application/use-cases/UploadImageUseCase.js';
 
 interface SelectedImage {
   id: string;
@@ -32,6 +32,88 @@ export function ImageSelector() {
   const [showMessage, setShowMessage] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
   const nav = useNavigate();
+
+  // Helper function to get upload settings
+  const getUploadSettings = useCallback(() => {
+    try {
+      const savedSettings =
+        NativeModules.NativeLocalStorageModule.getStorageItem('uploadSettings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        return {
+          maxParallelUploads: parsed.maxParallelUploads || 3,
+          autoUpload: parsed.autoUpload || false,
+        };
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+    return { maxParallelUploads: 3, autoUpload: false };
+  }, []);
+
+  // Helper function to process uploads with limited concurrency
+  const processUploadsWithLimit = useCallback(
+    async (
+      images: SelectedImage[],
+      maxConcurrent: number,
+      uploadImageUseCase: UploadImageUseCase,
+      onProgress: (imageId: string, status: 'success' | 'error') => void,
+    ) => {
+      let successCount = 0;
+      let failCount = 0;
+      let currentIndex = 0;
+
+      const processImage = async (image: SelectedImage, imageIndex: number): Promise<void> => {
+        try {
+          const result = await uploadImageUseCase.execute(
+            image.url,
+            image.fileName || `selected_image_${imageIndex + 1}.jpg`,
+            'image/jpeg',
+          );
+
+          // Check if result is an error (MediaUploadError has 'code' property)
+          if ('code' in result) {
+            console.error(
+              `Upload failed for image ${image.id}:`,
+              result.message,
+            );
+            onProgress(image.id, 'error');
+            failCount++;
+          } else {
+            // Success case (MediaUploadResult)
+            console.log(`Upload succeeded for image ${image.id}`);
+            onProgress(image.id, 'success');
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Error uploading image ${image.id}:`, error);
+          onProgress(image.id, 'error');
+          failCount++;
+        }
+      };
+
+      const processNext = async (): Promise<void> => {
+        while (currentIndex < images.length) {
+          const imageIndex = currentIndex++;
+          const image = images[imageIndex];
+          
+          if (image) {
+            await processImage(image, imageIndex);
+          }
+        }
+      };
+
+      // Start exactly maxConcurrent workers
+      const workers = Array.from({ length: Math.min(maxConcurrent, images.length) }, () =>
+        processNext()
+      );
+
+      await Promise.all(workers);
+
+      return { successCount, failCount };
+    },
+    [],
+  );
 
   useEffect(() => {
     const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
@@ -348,6 +430,9 @@ export function ImageSelector() {
     setUploadMessage('');
     setShowMessage(false);
 
+    // Get upload settings
+    const settings = getUploadSettings();
+
     // Initialize upload progress for all images
     const initialProgress: UploadProgress = {};
     nonUploadedImages.forEach((image) => {
@@ -365,65 +450,28 @@ export function ImageSelector() {
         });
       });
 
-      let successCount = 0;
-      let failCount = 0;
+      // Process uploads with parallel limit
+      const { successCount, failCount } = await processUploadsWithLimit(
+        nonUploadedImages,
+        settings.maxParallelUploads,
+        uploadImageUseCase,
+        (imageId: string, status: 'success' | 'error') => {
+          // Update progress for individual image
+          setUploadProgress((prev) => ({
+            ...prev,
+            [imageId]: status,
+          }));
 
-      // Process uploads sequentially to show real-time progress
-      for (let i = 0; i < nonUploadedImages.length; i++) {
-        const image = nonUploadedImages[i];
-
-        try {
-          const result = await uploadImageUseCase.execute(
-            image.url,
-            image.fileName || `selected_image_${i + 1}.jpg`,
-            'image/jpeg',
-          );
-
-          // Check if result is an error (MediaUploadError has 'code' property)
-          if ('code' in result) {
-            console.error(
-              `Upload failed for image ${image.id}:`,
-              result.message,
-            );
-
-            // Update this specific image's status to error
-            setUploadProgress((prev) => ({
-              ...prev,
-              [image.id]: 'error',
-            }));
-
-            failCount++;
-          } else {
-            // Success case (MediaUploadResult)
-            console.log(`Upload succeeded for image ${image.id}`);
-
-            // Update this specific image's status to success
-            setUploadProgress((prev) => ({
-              ...prev,
-              [image.id]: 'success',
-            }));
-
-            successCount++;
-
-            // Update the images with upload status immediately
+          // Update the images with upload status immediately for success
+          if (status === 'success') {
             setImagesWithUploadStatus((prevImages) =>
               prevImages.map((img) =>
-                img.id === image.id ? { ...img, isUploaded: true } : img,
+                img.id === imageId ? { ...img, isUploaded: true } : img,
               ),
             );
           }
-        } catch (error) {
-          console.error(`Error uploading image ${image.id}:`, error);
-
-          // Update this specific image's status to error
-          setUploadProgress((prev) => ({
-            ...prev,
-            [image.id]: 'error',
-          }));
-
-          failCount++;
-        }
-      }
+        },
+      );
 
       // Clear upload progress after a brief delay
       setTimeout(() => {
@@ -447,7 +495,9 @@ export function ImageSelector() {
       setSelectionMode(false);
 
       if (failCount === 0) {
-        setUploadMessage(`${successCount} images uploaded successfully!`);
+        setUploadMessage(
+          `${successCount} images uploaded successfully! (Max ${settings.maxParallelUploads} parallel)`,
+        );
       } else {
         setUploadMessage(
           `${successCount} uploaded, ${failCount} failed. Please try again for failed images.`,
@@ -467,7 +517,7 @@ export function ImageSelector() {
     } finally {
       setUploading(false);
     }
-  }, [selectedImages]);
+  }, [selectedImages, getUploadSettings, processUploadsWithLimit]);
 
   const cancelSelection = useCallback(() => {
     setSelectedImages([]);
@@ -646,7 +696,7 @@ export function ImageSelector() {
           width: '100%',
           height: '100%',
           paddingTop: selectionMode ? '100px' : '20px',
-          paddingBottom: '20px',
+          paddingBottom: '100px', // Account for bottom navigation
         }}
       >
         {/* Header */}
@@ -678,41 +728,6 @@ export function ImageSelector() {
               {images.length} images • Tap to upload • Long press to select
               multiple
             </text>
-            <view
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'center',
-                gap: '12px',
-              }}
-            >
-              <view
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: 'rgba(59, 130, 246, 0.9)',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-                  backdropFilter: 'blur(10px)',
-                }}
-                bindtap={() => nav('/online-gallery')}
-              >
-                <text
-                  style={{
-                    color: '#fff',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                  }}
-                >
-                  Online Gallery
-                </text>
-              </view>
-
-              <LogoutButton
-                text="Logout"
-                variant="secondary"
-                redirectTo="/login"
-              />
-            </view>
           </view>
         )}
 

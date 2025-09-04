@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback } from '@lynx-js/react';
-import { useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
 import { APP_CONFIG } from '../../../config/app.config.js';
 import { MediaDeleteError, MediaDeleteResult } from '../domain/entities.js';
 import { LoadingSpinner } from '../../../components/LoadingSpinner.js';
-import { LogoutButton } from '../../../components/LogoutButton.js';
 import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
 
 interface SelectedImage {
@@ -23,7 +21,6 @@ export function OnlineGallery() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState<string>('');
-  const navigate = useNavigate();
 
   const getUserAllImagesUseCase = diContainer.getGetUserAllImagesUseCase();
   const deleteImageUseCase = diContainer.getDeleteImageUseCase();
@@ -395,41 +392,6 @@ export function OnlineGallery() {
           >
             {images.length} images uploaded to server • Long press to delete
           </text>
-          <view
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              gap: '12px',
-            }}
-          >
-            <view
-              style={{
-                padding: '10px 20px',
-                backgroundColor: 'rgba(107, 114, 128, 0.9)',
-                borderRadius: '20px',
-                border: '1px solid rgba(107, 114, 128, 0.3)',
-                backdropFilter: 'blur(10px)',
-              }}
-              bindtap={() => navigate(-1)}
-            >
-              <text
-                style={{
-                  color: '#fff',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                }}
-              >
-                ← Local Gallery
-              </text>
-            </view>
-
-            <LogoutButton
-              text="Logout"
-              variant="secondary"
-              redirectTo="/login"
-            />
-          </view>
         </view>
       )}
 
@@ -442,7 +404,7 @@ export function OnlineGallery() {
           width: '100%',
           height: '100%',
           paddingTop: selectionMode ? '100px' : '20px',
-          paddingBottom: '20px',
+          paddingBottom: '100px', // Account for bottom navigation
         }}
       >
         {/* Image Grid */}
