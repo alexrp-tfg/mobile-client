@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from '@lynx-js/react';
 import { LogoutButton } from '../shared/presentation/LogoutButton.js';
+import { StatusMessage } from '../shared/presentation/StatusMessage.js';
+import { useStatusMessage } from '../shared/presentation/useStatusMessage.js';
 
 interface UploadSettings {
   maxParallelUploads: number;
@@ -14,8 +16,7 @@ const DEFAULT_SETTINGS: UploadSettings = {
 export function SettingsPage() {
   const [settings, setSettings] = useState<UploadSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string>('');
-  const [showMessage, setShowMessage] = useState(false);
+  const { message, showMessage: setMessage, clearMessage } = useStatusMessage();
 
   // Load settings from storage on component mount
   useEffect(() => {
@@ -37,38 +38,23 @@ export function SettingsPage() {
     loadSettings();
   }, []);
 
-  // Handle message visibility transitions
-  useEffect(() => {
-    if (message) {
-      setShowMessage(true);
-      const timer = setTimeout(() => {
-        setMessage('');
-      }, 3000);
-      return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => {
-        setShowMessage(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
-
+  // Save settings to storage
   const saveSettings = useCallback(async () => {
     setLoading(true);
     try {
-      // Save to native storage
+      const settingsJson = JSON.stringify(settings);
       NativeModules.NativeLocalStorageModule.setStorageItem(
         'uploadSettings',
-        JSON.stringify(settings),
+        settingsJson,
       );
       setMessage('Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
-      setMessage('Error saving settings. Please try again.');
+      setMessage('Error saving settings. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
-  }, [settings]);
+  }, [settings, setMessage]);
 
   const handleParallelUploadsChange = useCallback((value: number) => {
     const clampedValue = Math.max(1, Math.min(10, value));
@@ -82,7 +68,7 @@ export function SettingsPage() {
   const resetToDefaults = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
     setMessage('Settings reset to defaults');
-  }, []);
+  }, [setMessage]);
 
   return (
     <view
@@ -95,40 +81,11 @@ export function SettingsPage() {
       }}
     >
       {/* Status Message */}
-      <view
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          right: '20px',
-          zIndex: 1000,
-          padding: '16px',
-          backgroundColor: message.includes('Error')
-            ? 'rgba(220, 38, 127, 0.9)'
-            : 'rgba(34, 197, 94, 0.9)',
-          borderRadius: '12px',
-          backdropFilter: 'blur(10px)',
-          border: message.includes('Error')
-            ? '1px solid rgba(220, 38, 127, 0.3)'
-            : '1px solid rgba(34, 197, 94, 0.3)',
-          opacity: showMessage && message ? 1 : 0,
-          transform: showMessage ? 'translateY(0)' : 'translateY(-20px)',
-          transition: 'opacity 0.3s ease, transform 0.3s ease',
-          visibility: showMessage ? 'visible' : 'hidden',
-          pointerEvents: showMessage ? 'auto' : 'none',
-        }}
-      >
-        <text
-          style={{
-            color: '#fff',
-            fontSize: '14px',
-            textAlign: 'center',
-            fontWeight: '500',
-          }}
-        >
-          {message}
-        </text>
-      </view>
+      <StatusMessage
+        message={message}
+        type={message.includes('Error') ? 'error' : 'success'}
+        onHide={clearMessage}
+      />
 
       <scroll-view
         scroll-orientation="vertical"

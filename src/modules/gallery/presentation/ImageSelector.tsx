@@ -4,6 +4,8 @@ import { diContainer } from '../../../di/container.js';
 import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
 import { LoadingButton } from '../../shared/presentation/LoadingButton.js';
 import { RefreshButton } from '../../shared/presentation/RefreshButton.js';
+import { StatusMessage } from '../../shared/presentation/StatusMessage.js';
+import { useStatusMessage } from '../../shared/presentation/useStatusMessage.js';
 import type { Gallery } from '../domain/entities.js';
 import type { GalleryImageWithUploadStatus } from '../application/use-cases/GetUploadedFilesStatusUseCase.js';
 import type { UploadImageUseCase } from '../../media/application/use-cases/UploadImageUseCase.js';
@@ -30,9 +32,12 @@ export function ImageSelector() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [autoUploading, setAutoUploading] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState<string>('');
-  const [showMessage, setShowMessage] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
+  const {
+    message: uploadMessage,
+    showMessage: setUploadMessage,
+    clearMessage: clearUploadMessage,
+  } = useStatusMessage();
   const nav = useNavigate();
 
   // Helper function to get upload settings
@@ -243,19 +248,6 @@ export function ImageSelector() {
     loadGallery();
   }, [loadGallery]);
 
-  // Handle message visibility transitions
-  useEffect(() => {
-    if (uploadMessage) {
-      setShowMessage(true);
-    } else {
-      // Delay hiding to allow fade-out transition
-      const timer = setTimeout(() => {
-        setShowMessage(false);
-      }, 300); // Match the transition duration
-      return () => clearTimeout(timer);
-    }
-  }, [uploadMessage]);
-
   const toggleImageSelection = useCallback(
     (
       imageId: string,
@@ -303,9 +295,6 @@ export function ImageSelector() {
           setUploadMessage(
             'This image is already uploaded. Long press to delete from server.',
           );
-          setTimeout(() => {
-            setUploadMessage('');
-          }, 3000);
         } else {
           // For non-uploaded images, navigate to upload
           nav('/upload', { state: { imageUrl, fileName } });
@@ -414,15 +403,10 @@ export function ImageSelector() {
 
     if (uploadedImages.length === 0) {
       setUploadMessage('No uploaded images selected for deletion.');
-      setTimeout(() => {
-        setUploadMessage('');
-      }, 3000);
       return;
     }
 
     setUploading(true);
-    setUploadMessage('');
-    setShowMessage(false);
     const deleteImageUseCase = diContainer.getDeleteImageUseCase();
 
     try {
@@ -499,18 +483,12 @@ export function ImageSelector() {
       } else {
         setUploadMessage(
           `${failCount} images failed to delete. ${successCount} deleted successfully.`,
+          'error',
         );
       }
-
-      setTimeout(() => {
-        setUploadMessage('');
-      }, 3000);
     } catch (error) {
       console.error('Error deleting images:', error);
-      setUploadMessage('Error deleting images. Please try again.');
-      setTimeout(() => {
-        setUploadMessage('');
-      }, 5000);
+      setUploadMessage('Error deleting images. Please try again.', 'error');
     } finally {
       setUploading(false);
     }
@@ -520,9 +498,6 @@ export function ImageSelector() {
     // Prevent manual upload if auto upload is in progress
     if (autoUploading) {
       setUploadMessage('Auto upload in progress. Please wait and try again.');
-      setTimeout(() => {
-        setUploadMessage('');
-      }, 3000);
       return;
     }
 
@@ -531,15 +506,10 @@ export function ImageSelector() {
       setUploadMessage(
         'No new images to upload. Selected images are already uploaded.',
       );
-      setTimeout(() => {
-        setUploadMessage('');
-      }, 3000);
       return;
     }
 
     setUploading(true);
-    setUploadMessage('');
-    setShowMessage(false);
 
     // Get upload settings
     const settings = getUploadSettings();
@@ -612,19 +582,13 @@ export function ImageSelector() {
       } else {
         setUploadMessage(
           `${successCount} uploaded, ${failCount} failed. Please try again for failed images.`,
+          'error',
         );
       }
-
-      setTimeout(() => {
-        setUploadMessage('');
-      }, 3000);
     } catch (error) {
       console.error('Error uploading images:', error);
-      setUploadMessage('Error uploading images. Please try again.');
+      setUploadMessage('Error uploading images. Please try again.', 'error');
       setUploadProgress({});
-      setTimeout(() => {
-        setUploadMessage('');
-      }, 5000);
     } finally {
       setUploading(false);
     }
@@ -638,8 +602,8 @@ export function ImageSelector() {
   const cancelSelection = useCallback(() => {
     setSelectedImages([]);
     setSelectionMode(false);
-    setUploadMessage('');
-  }, []);
+    clearUploadMessage();
+  }, [clearUploadMessage]);
 
   const images =
     imagesWithUploadStatus.length > 0
@@ -673,40 +637,11 @@ export function ImageSelector() {
       }}
     >
       {/* Status Message */}
-      <view
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          right: '20px',
-          zIndex: 1000,
-          padding: '16px',
-          backgroundColor: uploadMessage.includes('Error')
-            ? 'rgba(220, 38, 127, 0.9)'
-            : 'rgba(34, 197, 94, 0.9)',
-          borderRadius: '12px',
-          backdropFilter: 'blur(10px)',
-          border: uploadMessage.includes('Error')
-            ? '1px solid rgba(220, 38, 127, 0.3)'
-            : '1px solid rgba(34, 197, 94, 0.3)',
-          opacity: showMessage && uploadMessage ? 1 : 0,
-          transform: showMessage ? 'translateY(0)' : 'translateY(-20px)',
-          transition: 'opacity 0.3s ease, transform 0.3s ease',
-          visibility: showMessage ? 'visible' : 'hidden',
-          pointerEvents: showMessage ? 'auto' : 'none',
-        }}
-      >
-        <text
-          style={{
-            color: '#fff',
-            fontSize: '14px',
-            textAlign: 'center',
-            fontWeight: '500',
-          }}
-        >
-          {uploadMessage}
-        </text>
-      </view>
+      <StatusMessage
+        message={uploadMessage}
+        type={uploadMessage.includes('Error') ? 'error' : 'success'}
+        onHide={clearUploadMessage}
+      />
 
       {/* Selection Header */}
       {selectionMode && (
