@@ -57,8 +57,11 @@ class DIContainer {
   private logoutUserUseCase: LogoutUserUseCase;
 
   private constructor() {
+    // Get server URL from storage or use fallback
+    const serverUrl = this.getServerUrl();
+
     // Initialize shared services
-    this.httpService = new HttpService('http://192.168.240.1:8000/api', '');
+    this.httpService = new HttpService(serverUrl, '');
     this.storageService = new StorageService();
     this.databaseService = new DatabaseService();
 
@@ -89,6 +92,48 @@ class DIContainer {
     // Initialize authentication services
     this.loginUserUseCase = new LoginUserUseCase(this.httpService);
     this.logoutUserUseCase = new LogoutUserUseCase();
+  }
+
+  private getServerUrl(): string {
+    try {
+      const savedServerUrl =
+        NativeModules.NativeLocalStorageModule.getStorageItem('serverUrl');
+      return savedServerUrl || 'http://192.168.240.1:8000/api'; // Fallback to default
+    } catch (error) {
+      console.warn(
+        'Could not load server URL from storage, using default:',
+        error,
+      );
+      return 'http://192.168.240.1:8000/api'; // Fallback to default
+    }
+  }
+
+  // Method to update server URL and reinitialize services
+  updateServerUrl(newServerUrl: string) {
+    // Update HttpService with new URL
+    this.httpService = new HttpService(newServerUrl, '');
+
+    // Reinitialize media services that depend on HttpService
+    this.mediaRepository = new MediaRepository(
+      this.httpService,
+      this.mediaProcessingService,
+    );
+    this.uploadImageUseCase = new UploadImageUseCase(
+      this.mediaRepository,
+      this.storageService,
+    );
+    this.deleteImageUseCase = new DeleteImageUseCase(this.mediaRepository);
+    this.getUserAllImagesUseCase = new GetUserAllImagesUseCase(
+      this.mediaRepository,
+    );
+    this.getUploadedFilesStatusUseCase = new GetUploadedFilesStatusUseCase(
+      this.getUserAllImagesUseCase,
+    );
+
+    // Reinitialize authentication services
+    this.loginUserUseCase = new LoginUserUseCase(this.httpService);
+
+    console.log('DI Container updated with new server URL:', newServerUrl);
   }
 
   static getInstance(): DIContainer {

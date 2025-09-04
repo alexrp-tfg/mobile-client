@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from '@lynx-js/react';
 import { diContainer } from '../../../di/container.js';
-import { APP_CONFIG } from '../../../config/app.config.js';
 import { MediaDeleteError, MediaDeleteResult } from '../domain/entities.js';
 import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
 import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
@@ -21,9 +20,23 @@ export function OnlineGallery() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState<string>('');
+  const [serverUrl, setServerUrl] = useState<string>('');
 
   const getUserAllImagesUseCase = diContainer.getGetUserAllImagesUseCase();
   const deleteImageUseCase = diContainer.getDeleteImageUseCase();
+
+  // Load server URL from storage
+  useEffect(() => {
+    try {
+      const savedServerUrl =
+        NativeModules.NativeLocalStorageModule.getStorageItem('serverUrl');
+      if (savedServerUrl) {
+        setServerUrl(savedServerUrl);
+      }
+    } catch (error) {
+      console.error('Error loading server URL:', error);
+    }
+  }, []);
 
   useEffect(() => {
     loadImages();
@@ -135,7 +148,7 @@ export function OnlineGallery() {
   };
 
   const getImageUrl = (imageId: string) => {
-    return `${APP_CONFIG.API.BASE_URL}/media/stream/${imageId}`;
+    return serverUrl ? `${serverUrl}/media/stream/${imageId}` : '';
   };
 
   if (loading) {

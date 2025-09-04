@@ -5,6 +5,7 @@ import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
 import { LoadingButton } from '../../shared/presentation/LoadingButton.js';
 import { RefreshButton } from '../../shared/presentation/RefreshButton.js';
 import { StatusMessage } from '../../shared/presentation/StatusMessage.js';
+import { ServerStatus } from '../../shared/presentation/ServerStatus.js';
 import { useStatusMessage } from '../../shared/presentation/useStatusMessage.js';
 import type { Gallery } from '../domain/entities.js';
 import type { GalleryImageWithUploadStatus } from '../application/use-cases/GetUploadedFilesStatusUseCase.js';
@@ -33,6 +34,7 @@ export function ImageSelector() {
   const [uploading, setUploading] = useState(false);
   const [autoUploading, setAutoUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
+  const [serverUrl, setServerUrl] = useState<string>('');
   const {
     message: uploadMessage,
     showMessage: setUploadMessage,
@@ -247,6 +249,19 @@ export function ImageSelector() {
   useEffect(() => {
     loadGallery();
   }, [loadGallery]);
+
+  // Load server URL from storage
+  useEffect(() => {
+    try {
+      const savedServerUrl =
+        NativeModules.NativeLocalStorageModule.getStorageItem('serverUrl');
+      if (savedServerUrl) {
+        setServerUrl(savedServerUrl);
+      }
+    } catch (error) {
+      console.error('Error loading server URL:', error);
+    }
+  }, []);
 
   const toggleImageSelection = useCallback(
     (
@@ -610,23 +625,6 @@ export function ImageSelector() {
       ? imagesWithUploadStatus
       : gallery?.images || [];
 
-  if (loading) {
-    return (
-      <view
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#000',
-        }}
-      >
-        <LoadingSpinner size="large" color="#fff" text="Loading gallery..." />
-      </view>
-    );
-  }
-
   return (
     <view
       style={{
@@ -792,6 +790,13 @@ export function ImageSelector() {
               {images.length} images • Tap to upload • Long press to select
               multiple
             </text>
+
+            {/* Server Status */}
+            {serverUrl && (
+              <view style={{ marginBottom: '16px' }}>
+                <ServerStatus serverUrl={serverUrl} compact={true} />
+              </view>
+            )}
           </view>
         )}
 
