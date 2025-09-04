@@ -15,6 +15,10 @@ interface SelectedImage {
   uploadedImageId?: string;
 }
 
+interface UploadProgress {
+  [imageId: string]: 'uploading' | 'success' | 'error';
+}
+
 export function ImageSelector() {
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [imagesWithUploadStatus, setImagesWithUploadStatus] = useState<
@@ -26,6 +30,7 @@ export function ImageSelector() {
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<string>('');
   const [showMessage, setShowMessage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
   const nav = useNavigate();
 
   useEffect(() => {
@@ -342,6 +347,14 @@ export function ImageSelector() {
     setUploading(true);
     setUploadMessage('');
     setShowMessage(false);
+
+    // Initialize upload progress for all images
+    const initialProgress: UploadProgress = {};
+    nonUploadedImages.forEach((image) => {
+      initialProgress[image.id] = 'uploading';
+    });
+    setUploadProgress(initialProgress);
+
     const uploadImageUseCase = diContainer.getUploadImageUseCase();
 
     try {
@@ -352,17 +365,72 @@ export function ImageSelector() {
         });
       });
 
-      const uploadPromises = nonUploadedImages.map((image, index) =>
-        uploadImageUseCase.execute(
-          image.url,
-          image.fileName || `selected_image_${index + 1}.jpg`,
-          'image/jpeg',
-        ),
-      );
+      let successCount = 0;
+      let failCount = 0;
 
-      await Promise.all(uploadPromises);
+      // Process uploads sequentially to show real-time progress
+      for (let i = 0; i < nonUploadedImages.length; i++) {
+        const image = nonUploadedImages[i];
 
-      // Reload gallery to update upload status
+        try {
+          const result = await uploadImageUseCase.execute(
+            image.url,
+            image.fileName || `selected_image_${i + 1}.jpg`,
+            'image/jpeg',
+          );
+
+          // Check if result is an error (MediaUploadError has 'code' property)
+          if ('code' in result) {
+            console.error(
+              `Upload failed for image ${image.id}:`,
+              result.message,
+            );
+
+            // Update this specific image's status to error
+            setUploadProgress((prev) => ({
+              ...prev,
+              [image.id]: 'error',
+            }));
+
+            failCount++;
+          } else {
+            // Success case (MediaUploadResult)
+            console.log(`Upload succeeded for image ${image.id}`);
+
+            // Update this specific image's status to success
+            setUploadProgress((prev) => ({
+              ...prev,
+              [image.id]: 'success',
+            }));
+
+            successCount++;
+
+            // Update the images with upload status immediately
+            setImagesWithUploadStatus((prevImages) =>
+              prevImages.map((img) =>
+                img.id === image.id ? { ...img, isUploaded: true } : img,
+              ),
+            );
+          }
+        } catch (error) {
+          console.error(`Error uploading image ${image.id}:`, error);
+
+          // Update this specific image's status to error
+          setUploadProgress((prev) => ({
+            ...prev,
+            [image.id]: 'error',
+          }));
+
+          failCount++;
+        }
+      }
+
+      // Clear upload progress after a brief delay
+      setTimeout(() => {
+        setUploadProgress({});
+      }, 2000);
+
+      // Reload gallery to ensure full sync with server
       const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
       const getUploadedFilesStatusUseCase =
         diContainer.getGetUploadedFilesStatusUseCase();
@@ -377,9 +445,14 @@ export function ImageSelector() {
 
       setSelectedImages([]);
       setSelectionMode(false);
-      setUploadMessage(
-        `${nonUploadedImages.length} images uploaded successfully!`,
-      );
+
+      if (failCount === 0) {
+        setUploadMessage(`${successCount} images uploaded successfully!`);
+      } else {
+        setUploadMessage(
+          `${successCount} uploaded, ${failCount} failed. Please try again for failed images.`,
+        );
+      }
 
       setTimeout(() => {
         setUploadMessage('');
@@ -387,6 +460,7 @@ export function ImageSelector() {
     } catch (error) {
       console.error('Error uploading images:', error);
       setUploadMessage('Error uploading images. Please try again.');
+      setUploadProgress({});
       setTimeout(() => {
         setUploadMessage('');
       }, 5000);
@@ -711,6 +785,93 @@ export function ImageSelector() {
                         }}
                       >
                         ✓ Uploaded
+                      </text>
+                    </view>
+                  )}
+
+                  {/* Real-time Upload Progress Indicator */}
+                  {uploadProgress[image.id] === 'uploading' && (
+                    <view
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
+                      <text
+                        style={{
+                          color: '#fff',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        ⏳ Uploading...
+                      </text>
+                    </view>
+                  )}
+
+                  {/* Upload Success Indicator */}
+                  {uploadProgress[image.id] === 'success' && (
+                    <view
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(34, 197, 94, 0.9)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(34, 197, 94, 0.3)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
+                      <text
+                        style={{
+                          color: '#fff',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        ✅ Success!
+                      </text>
+                    </view>
+                  )}
+
+                  {/* Upload Error Indicator */}
+                  {uploadProgress[image.id] === 'error' && (
+                    <view
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(220, 38, 127, 0.9)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid rgba(220, 38, 127, 0.3)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
+                      <text
+                        style={{
+                          color: '#fff',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                        }}
+                      >
+                        ❌ Failed
                       </text>
                     </view>
                   )}
