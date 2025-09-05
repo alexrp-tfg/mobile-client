@@ -553,27 +553,6 @@ export function OnlineGallery() {
             </view>
           </list-item>
         )}
-
-        {/* Footer */}
-        {images.length > 0 && (
-          <list-item key="footer" item-key="footer" full-span={true}>
-            <view
-              style={{
-                padding: '40px 20px 20px',
-                textAlign: 'center',
-              }}
-            >
-              <text
-                style={{
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.4)',
-                }}
-              >
-                Lynx Online Gallery
-              </text>
-            </view>
-          </list-item>
-        )}
       </list>
 
       {/* Modal for viewing full image */}

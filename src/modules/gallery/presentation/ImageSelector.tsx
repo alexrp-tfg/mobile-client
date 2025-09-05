@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
 import { useNavigate } from 'react-router';
 import { diContainer } from '../../../di/container.js';
-import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
 import { LoadingButton } from '../../shared/presentation/LoadingButton.js';
 import { RefreshButton } from '../../shared/presentation/RefreshButton.js';
 import { StatusMessage } from '../../shared/presentation/StatusMessage.js';
@@ -389,6 +388,7 @@ export function ImageSelector() {
       isUploaded?: boolean,
       uploadedImageId?: string,
     ) => {
+      if (selectionMode) return; // Ignore if already in selection mode
       if (isUploaded && uploadedImageId) {
         // For uploaded images, enter selection mode for deletion
         setSelectionMode(true);
@@ -405,7 +405,7 @@ export function ImageSelector() {
         toggleImageSelection(imageId, imageUrl, fileName);
       }
     },
-    [toggleImageSelection],
+    [toggleImageSelection, selectionMode],
   );
 
   const deleteSelectedImages = useCallback(async () => {
@@ -1061,25 +1061,6 @@ export function ImageSelector() {
               }}
             >
               Your photo gallery appears to be empty
-            </text>
-          </view>
-        )}
-
-        {/* Footer */}
-        {images.length > 0 && (
-          <view
-            style={{
-              padding: '40px 20px 20px',
-              textAlign: 'center',
-            }}
-          >
-            <text
-              style={{
-                fontSize: '12px',
-                color: 'rgba(255, 255, 255, 0.4)',
-              }}
-            >
-              Lynx Local Gallery
             </text>
           </view>
         )}
