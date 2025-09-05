@@ -18,6 +18,10 @@ interface ImageUploadProps {
   onClose?: () => void;
   onNavigateToOnlineGallery?: () => void;
   isModal?: boolean;
+  // Online gallery mode props
+  isOnlineGalleryMode?: boolean;
+  onlineImageId?: string;
+  onImageDeleted?: () => void;
 }
 
 export function ImageUpload({
@@ -26,6 +30,9 @@ export function ImageUpload({
   onClose,
   onNavigateToOnlineGallery,
   isModal = false,
+  isOnlineGalleryMode = false,
+  onlineImageId,
+  onImageDeleted,
 }: ImageUploadProps = {}) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,6 +55,14 @@ export function ImageUpload({
   // Check if image is already uploaded
   useEffect(() => {
     const checkUploadStatus = async () => {
+      // In online gallery mode, we know the image is uploaded
+      if (isOnlineGalleryMode) {
+        setIsAlreadyUploaded(true);
+        setUploadedImageId(onlineImageId || null);
+        setCheckingUploadStatus(false);
+        return;
+      }
+
       if (!fileName) {
         setCheckingUploadStatus(false);
         return;
@@ -71,7 +86,7 @@ export function ImageUpload({
     };
 
     checkUploadStatus();
-  }, [fileName, getUserAllImagesUseCase]);
+  }, [fileName, getUserAllImagesUseCase, isOnlineGalleryMode, onlineImageId]);
 
   const handleImageUpload = async () => {
     console.log('Starting image upload...');
@@ -139,10 +154,18 @@ export function ImageUpload({
         // Success - image deleted
         setIsAlreadyUploaded(false);
         setUploadedImageId(null);
-        setUploadResult({
-          type: 'delete_success',
-          message: 'Image deleted successfully from server',
-        });
+
+        if (isOnlineGalleryMode) {
+          // In online gallery mode, call the callback and close immediately
+          onImageDeleted?.();
+          onClose?.();
+        } else {
+          // In regular mode, show success state for potential re-upload
+          setUploadResult({
+            type: 'delete_success',
+            message: 'Image deleted successfully from server',
+          });
+        }
       } else {
         setUploadResult(
           new MediaUploadError(`Error deleting image: ${result.message}`, 500),
@@ -178,7 +201,9 @@ export function ImageUpload({
     return (
       <view className="image-upload-container">
         <view className="image-upload-header">
-          <text className="image-upload-title">Upload Image</text>
+          <text className="image-upload-title">
+            {isOnlineGalleryMode ? 'Image Details' : 'Upload Image'}
+          </text>
           {isModal ? (
             <view
               className="image-upload-nav-button"
@@ -214,7 +239,9 @@ export function ImageUpload({
   return (
     <view className="image-upload-container">
       <view className="image-upload-header">
-        <text className="image-upload-title">Upload Image</text>
+        <text className="image-upload-title">
+          {isOnlineGalleryMode ? 'Image Details' : 'Upload Image'}
+        </text>
         {isModal ? (
           <view
             className="image-upload-nav-button"

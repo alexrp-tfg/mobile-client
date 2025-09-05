@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from '@lynx-js/react';
 import { diContainer } from '../../../di/container.js';
 import { MediaDeleteError, MediaDeleteResult } from '../domain/entities.js';
 import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
+import { ImageUpload } from './ImageUpload.js';
 import type { GetAllImagesDto } from '../../shared/infrastructure/dtos/get-all-images.dto.js';
 
 interface SelectedImage {
@@ -555,80 +556,33 @@ export function OnlineGallery() {
         )}
       </list>
 
-      {/* Modal for viewing full image */}
+      {/* Modal for viewing and managing image */}
       {selectedImage && (
         <view
           style={{
             position: 'fixed',
             top: '0',
             left: '0',
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            right: '0',
+            bottom: '0',
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
             zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
           }}
-          bindtap={handleCloseModal}
         >
-          <view
-            style={{
-              position: 'relative',
-              maxWidth: '90%',
-              maxHeight: '90%',
-              background: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '12px',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              overflow: 'hidden',
+          <ImageUpload
+            imageUrl={getImageUrl(selectedImage.id)}
+            fileName={selectedImage.original_filename}
+            onClose={handleCloseModal}
+            isModal={true}
+            isOnlineGalleryMode={true}
+            onlineImageId={selectedImage.id}
+            onImageDeleted={() => {
+              // Refresh the gallery to remove the deleted image
+              loadImages();
             }}
-          >
-            <view
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                width: '32px',
-                height: '32px',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                borderRadius: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 1001,
-              }}
-              bindtap={handleCloseModal}
-            >
-              <text
-                style={{ color: '#fff', fontSize: '18px', fontWeight: '700' }}
-              >
-                ×
-              </text>
-            </view>
-            <image
-              src={getImageUrl(selectedImage.id)}
-              mode="aspectFit"
-              style={{
-                width: '100%',
-                height: '100%',
-                minHeight: '300px',
-                maxHeight: '70vh',
-              }}
-            />
-            <view
-              style={{
-                padding: '16px',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                textAlign: 'center',
-              }}
-            >
-              <text style={{ color: '#fff', fontSize: '14px' }}>
-                Image {selectedImage.id}
-              </text>
-            </view>
-          </view>
+          />
         </view>
       )}
     </view>
