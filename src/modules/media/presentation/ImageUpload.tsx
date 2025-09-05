@@ -6,6 +6,11 @@ import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
 import { LoadingButton } from '../../shared/presentation/LoadingButton.js';
 import './ImageUpload.css';
 
+interface DeleteSuccessState {
+  type: 'delete_success';
+  message: string;
+}
+
 interface ImageUploadProps {
   // Modal mode props
   imageUrl?: string;
@@ -29,7 +34,7 @@ export function ImageUpload({
   const [isAlreadyUploaded, setIsAlreadyUploaded] = useState(false);
   const [uploadedImageId, setUploadedImageId] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<
-    MediaUploadResult | MediaUploadError | null
+    MediaUploadResult | MediaUploadError | DeleteSuccessState | null
   >(null);
 
   const uploadImageUseCase = diContainer.getUploadImageUseCase();
@@ -134,16 +139,10 @@ export function ImageUpload({
         // Success - image deleted
         setIsAlreadyUploaded(false);
         setUploadedImageId(null);
-        setUploadResult(
-          new MediaUploadResult(
-            result.id,
-            fileName || 'image.jpg',
-            fileName || 'image.jpg',
-            0,
-            'image/jpeg',
-            new Date().toISOString(),
-          ),
-        );
+        setUploadResult({
+          type: 'delete_success',
+          message: 'Image deleted successfully from server',
+        });
       } else {
         setUploadResult(
           new MediaUploadError(`Error deleting image: ${result.message}`, 500),
@@ -318,6 +317,34 @@ export function ImageUpload({
               </view>
             </view>
           )}
+
+          {uploadResult &&
+            'type' in uploadResult &&
+            uploadResult.type === 'delete_success' && (
+              <view className="image-upload-success">
+                <text className="image-upload-success-title">
+                  Delete Successful!
+                </text>
+                <text className="image-upload-success-subtitle">
+                  {uploadResult.message}
+                </text>
+                <view className="image-upload-actions-row">
+                  <LoadingButton
+                    text="Upload to Server"
+                    loadingText="Uploading..."
+                    loading={loading}
+                    onTap={handleImageUpload}
+                    className="image-upload-button"
+                  />
+                  <view
+                    className="image-upload-button secondary"
+                    bindtap={handleBackToGallery}
+                  >
+                    <text>{isModal ? 'Close' : 'Back to Gallery'}</text>
+                  </view>
+                </view>
+              </view>
+            )}
 
           {uploadResult instanceof MediaUploadError && (
             <view className="image-upload-error">
