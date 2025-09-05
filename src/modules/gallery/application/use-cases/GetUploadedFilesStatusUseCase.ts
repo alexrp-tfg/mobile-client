@@ -17,6 +17,7 @@ export class GetUploadedFilesStatusUseCase {
     try {
       // Get all uploaded images from the server
       const uploadedImages = await this.getUserAllImagesUseCase.execute();
+      console.log(uploadedImages);
 
       // Create a Set of uploaded filenames for fast lookup
       const uploadedFilenames = new Set<string>();

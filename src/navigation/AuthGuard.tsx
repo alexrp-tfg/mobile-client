@@ -15,7 +15,6 @@ export function AuthGuard({ children, redirectTo = '/login' }: AuthGuardProps) {
   const { isAuthenticated, isInitialized } = useAuth();
   const navigate = useNavigate();
   const hasNavigated = useRef(false);
-  console.log('Rendering AuthGuard');
 
   useEffect(() => {
     if (isInitialized && isAuthenticated && !hasNavigated.current) {

@@ -73,6 +73,7 @@ export class MediaRepository implements IMediaRepository {
       const response = await this.httpService.get<GetAllImagesDto[]>('/media');
 
       if (response.success && response.data) {
+        console.log(response.data);
         return response.data;
       } else {
         throw new Error(response.error?.message || 'Error fetching images');

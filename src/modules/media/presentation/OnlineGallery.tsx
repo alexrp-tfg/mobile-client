@@ -25,24 +25,7 @@ export function OnlineGallery() {
   const getUserAllImagesUseCase = diContainer.getGetUserAllImagesUseCase();
   const deleteImageUseCase = diContainer.getDeleteImageUseCase();
 
-  // Load server URL from storage
-  useEffect(() => {
-    try {
-      const savedServerUrl =
-        NativeModules.NativeLocalStorageModule.getStorageItem('serverUrl');
-      if (savedServerUrl) {
-        setServerUrl(savedServerUrl);
-      }
-    } catch (error) {
-      console.error('Error loading server URL:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadImages();
-  }, []);
-
-  const loadImages = async () => {
+  const loadImages = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -54,7 +37,21 @@ export function OnlineGallery() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getUserAllImagesUseCase]);
+
+  // Load server URL from storage
+  useEffect(() => {
+    try {
+      const savedServerUrl =
+        NativeModules.NativeLocalStorageModule.getStorageItem('serverUrl');
+      if (savedServerUrl) {
+        setServerUrl(savedServerUrl);
+      }
+    } catch (error) {
+      console.error('Error loading server URL:', error);
+    }
+    loadImages();
+  }, [loadImages]);
 
   const toggleImageSelection = useCallback(
     (imageId: string, imageUrl: string) => {
@@ -234,6 +231,7 @@ export function OnlineGallery() {
       style={{
         width: '100%',
         height: '100%',
+        paddingBottom: '32px',
         backgroundColor: '#000',
         position: 'relative',
       }}
@@ -416,8 +414,8 @@ export function OnlineGallery() {
         style={{
           width: '100%',
           height: '100%',
+          padding: '0 20px',
           paddingTop: selectionMode ? '100px' : '20px',
-          paddingBottom: '100px', // Account for bottom navigation
         }}
       >
         {/* Image Grid */}
@@ -431,6 +429,7 @@ export function OnlineGallery() {
               <list-item
                 style={{
                   width: '100%',
+                  height: '200px',
                 }}
                 key={image.id}
                 item-key={image.id}
@@ -449,6 +448,7 @@ export function OnlineGallery() {
                     height: '100%',
                     opacity: isSelected ? 0.7 : 1,
                     transition: 'opacity 0.2s ease',
+                    borderRadius: '8px',
                   }}
                 />
 

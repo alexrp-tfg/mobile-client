@@ -28,6 +28,10 @@ export function ImageSelector() {
     GalleryImageWithUploadStatus[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreImages, setHasMoreImages] = useState(true);
+  const [totalImageCount, setTotalImageCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0); // Track current page for offset calculation
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -40,6 +44,9 @@ export function ImageSelector() {
     clearMessage: clearUploadMessage,
   } = useStatusMessage();
   const nav = useNavigate();
+
+  // Pagination constants
+  const IMAGES_PER_PAGE = 10;
 
   // Helper function to get upload settings
   const getUploadSettings = useCallback(() => {
@@ -181,28 +188,117 @@ export function ImageSelector() {
     [getUploadSettings, processUploadsWithLimit],
   );
 
-  const loadGallery = useCallback(async () => {
-    const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
+  const loadGallery = useCallback(
+    async (reset: boolean = true) => {
+      const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
+      const getUploadedFilesStatusUseCase =
+        diContainer.getGetUploadedFilesStatusUseCase();
+
+      if (reset) {
+        setLoading(true);
+        setImagesWithUploadStatus([]);
+        setCurrentPage(0);
+      } else {
+        setLoadingMore(true);
+      }
+
+      try {
+        // Get current images count to determine offset
+        // Use page-based calculation for more reliable offset
+        const currentOffset = reset ? 0 : currentPage * IMAGES_PER_PAGE;
+
+        console.log(
+          `Loading gallery: reset=${reset}, currentPage=${currentPage}, currentOffset=${currentOffset}`,
+        );
+
+        // Load new images
+        const galleryResult = await getGalleryImagesUseCase.execute(
+          IMAGES_PER_PAGE,
+          currentOffset,
+        );
+
+        // Get total count for proper hasMoreImages calculation
+        const currentTotal = await getGalleryImagesUseCase.getTotalCount();
+        setTotalImageCount(currentTotal);
+
+        // Check upload status for all images
+        const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
+          galleryResult.images,
+        );
+
+        if (reset) {
+          setGallery(galleryResult);
+          setImagesWithUploadStatus(imagesWithStatus);
+          setCurrentPage(1); // Next page will be page 1
+        } else {
+          // Append new images to existing list - avoid duplicates
+          setImagesWithUploadStatus((prev) => {
+            const existingIds = new Set(prev.map((img) => img.id));
+            const newImages = imagesWithStatus.filter(
+              (img) => !existingIds.has(img.id),
+            );
+            console.log(
+              `Appending ${newImages.length} new images (filtered from ${imagesWithStatus.length})`,
+            );
+            return [...prev, ...newImages];
+          });
+          setCurrentPage((prev) => prev + 1); // Increment page
+        }
+
+        // Update hasMoreImages based on loaded count vs total count
+        const newTotalLoaded = currentOffset + galleryResult.images.length;
+        setHasMoreImages(newTotalLoaded < currentTotal);
+
+        console.log(
+          `Loaded ${galleryResult.images.length} images (offset: ${currentOffset}, total: ${currentTotal}, newTotalLoaded: ${newTotalLoaded}, hasMore: ${newTotalLoaded < currentTotal})`,
+        );
+      } catch (error) {
+        console.error('Error loading gallery:', error);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [IMAGES_PER_PAGE, currentPage],
+  );
+
+  // Refresh server state without resetting pagination
+  const refreshServerState = useCallback(async () => {
     const getUploadedFilesStatusUseCase =
       diContainer.getGetUploadedFilesStatusUseCase();
 
-    setLoading(true);
     try {
-      const galleryResult = await getGalleryImagesUseCase.execute(15);
-      setGallery(galleryResult);
+      // Re-check upload status for currently loaded images
+      const currentImages = imagesWithUploadStatus.map((img) => ({
+        id: img.id,
+        url: img.url,
+        metadata: img.metadata,
+      }));
 
-      // Check upload status for all images
-      const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
-        galleryResult.images,
-      );
-      setImagesWithUploadStatus(imagesWithStatus);
-      console.log('Loaded gallery with images:', imagesWithStatus);
+      const updatedImagesWithStatus =
+        await getUploadedFilesStatusUseCase.execute(currentImages);
+
+      // Update the current images with fresh server state
+      setImagesWithUploadStatus(updatedImagesWithStatus);
+
+      console.log('Server state refreshed for currently loaded images');
     } catch (error) {
-      console.error('Error loading gallery:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error refreshing server state:', error);
     }
-  }, []);
+  }, [imagesWithUploadStatus]);
+
+  // Load more images when scrolling near bottom
+  const loadMoreImages = useCallback(async () => {
+    console.log(
+      `loadMoreImages called: loadingMore=${loadingMore}, hasMoreImages=${hasMoreImages}, loading=${loading}`,
+    );
+    if (!loadingMore && hasMoreImages && !loading) {
+      console.log('Triggering load more...');
+      await loadGallery(false);
+    } else {
+      console.log('Skipping load more - conditions not met');
+    }
+  }, [loadGallery, loadingMore, hasMoreImages, loading]);
 
   // Separate effect for auto upload to avoid blocking gallery loading
   useEffect(() => {
@@ -240,7 +336,7 @@ export function ImageSelector() {
     }
   }, [
     loading,
-    imagesWithUploadStatus,
+    imagesWithUploadStatus.length, // Use length to avoid re-running on every array change
     selectionMode,
     uploading,
     autoUploading,
@@ -249,8 +345,12 @@ export function ImageSelector() {
   ]);
 
   useEffect(() => {
-    loadGallery();
-  }, [loadGallery]);
+    // Initial load - using a local async function to avoid dependency loops
+    const initialLoad = async () => {
+      await loadGallery(true);
+    };
+    initialLoad();
+  }, []); // Empty dependency array for initial load only
 
   // Load server URL from storage
   useEffect(() => {
@@ -307,15 +407,7 @@ export function ImageSelector() {
       uploadedImageId?: string,
     ) => {
       if (!selectionMode) {
-        if (isUploaded) {
-          // For uploaded images, show a message
-          setUploadMessage(
-            'This image is already uploaded. Long press to delete from server.',
-          );
-        } else {
-          // For non-uploaded images, navigate to upload
-          nav('/upload', { state: { imageUrl, fileName } });
-        }
+        nav('/upload', { state: { imageUrl, fileName } });
       } else {
         // In selection mode, check what type of images are selected
         console.log(
@@ -479,19 +571,11 @@ export function ImageSelector() {
       );
 
       if (failCount === 0) {
-        // All deletes successful - reload gallery status
-        const getGalleryImagesUseCase =
-          diContainer.getGetGalleryImagesUseCase();
-        const getUploadedFilesStatusUseCase =
-          diContainer.getGetUploadedFilesStatusUseCase();
-
-        const galleryResult = await getGalleryImagesUseCase.execute(15);
-        setGallery(galleryResult);
-
-        const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
-          galleryResult.images,
+        // All deletes successful - refresh server state without resetting pagination
+        console.log(
+          'Delete successful, refreshing server state without pagination reset...',
         );
-        setImagesWithUploadStatus(imagesWithStatus);
+        await refreshServerState();
 
         setSelectedImages([]);
         setSelectionMode(false);
@@ -510,7 +594,7 @@ export function ImageSelector() {
     } finally {
       setUploading(false);
     }
-  }, [selectedImages]);
+  }, [selectedImages, refreshServerState]);
 
   const uploadSelectedImages = useCallback(async () => {
     // Prevent manual upload if auto upload is in progress
@@ -577,18 +661,11 @@ export function ImageSelector() {
         setUploadProgress({});
       }, 2000);
 
-      // Reload gallery to ensure full sync with server
-      const getGalleryImagesUseCase = diContainer.getGetGalleryImagesUseCase();
-      const getUploadedFilesStatusUseCase =
-        diContainer.getGetUploadedFilesStatusUseCase();
-
-      const galleryResult = await getGalleryImagesUseCase.execute(15);
-      setGallery(galleryResult);
-
-      const imagesWithStatus = await getUploadedFilesStatusUseCase.execute(
-        galleryResult.images,
+      // Refresh server state without resetting pagination
+      console.log(
+        'Upload successful, refreshing server state without pagination reset...',
       );
-      setImagesWithUploadStatus(imagesWithStatus);
+      await refreshServerState();
 
       setSelectedImages([]);
       setSelectionMode(false);
@@ -615,6 +692,7 @@ export function ImageSelector() {
     getUploadSettings,
     processUploadsWithLimit,
     autoUploading,
+    refreshServerState,
   ]);
 
   const cancelSelection = useCallback(() => {
@@ -635,6 +713,7 @@ export function ImageSelector() {
         height: '100%',
         backgroundColor: '#000',
         position: 'relative',
+        paddingBottom: '32px', // Space for bottom nav bar
       }}
     >
       {/* Status Message */}
@@ -742,13 +821,13 @@ export function ImageSelector() {
       )}
 
       {/* Main Content */}
-      <scroll-view
-        scroll-orientation="vertical"
+      <view
         style={{
           width: '100%',
           height: '100%',
-          paddingTop: selectionMode ? '100px' : '20px',
-          paddingBottom: '100px', // Account for bottom navigation
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: selectionMode ? '100px' : '0px',
         }}
       >
         {/* Header */}
@@ -758,6 +837,7 @@ export function ImageSelector() {
               padding: '20px',
               textAlign: 'center',
               position: 'relative',
+              flexShrink: 0,
             }}
           >
             {/* Refresh Button - Top Right */}
@@ -769,7 +849,10 @@ export function ImageSelector() {
                 zIndex: 10,
               }}
             >
-              <RefreshButton onRefresh={loadGallery} disabled={loading} />
+              <RefreshButton
+                onRefresh={() => loadGallery(true)}
+                disabled={loading}
+              />
             </view>
 
             <text
@@ -790,8 +873,9 @@ export function ImageSelector() {
                 marginBottom: '16px',
               }}
             >
-              {images.length} images • Tap to upload • Long press to select
-              multiple
+              {totalImageCount > 0
+                ? `${images.length} of ${totalImageCount} images loaded • Tap to upload • Long press to select multiple`
+                : `${images.length} images • Tap to upload • Long press to select multiple`}
             </text>
 
             {/* Server Status */}
@@ -803,9 +887,24 @@ export function ImageSelector() {
           </view>
         )}
 
-        {/* Image Grid */}
+        {/* Image List */}
         {images.length > 0 ? (
-          <view className="gallery-grid">
+          <list
+            className="gallery-list"
+            list-type="waterfall"
+            span-count={2}
+            scroll-orientation="vertical"
+            enable-scroll={true}
+            lower-threshold-item-count={1}
+            bindscrolltolower={loadMoreImages}
+            style={{
+              width: '100%',
+              height: '100%',
+              padding: '0 20px',
+            }}
+            list-main-axis-gap="8px"
+            list-cross-axis-gap="8px"
+          >
             {images.map((image) => {
               const isSelected = selectedImages.some(
                 (selected) => selected.id === image.id,
@@ -813,9 +912,14 @@ export function ImageSelector() {
               const imageWithStatus = image as GalleryImageWithUploadStatus;
 
               return (
-                <view
+                <list-item
                   key={image.id}
+                  item-key={image.id}
                   className={`gallery-item ${isSelected ? 'gallery-item--selected' : 'gallery-item--normal'}`}
+                  style={{
+                    height: '200px',
+                    width: '100%',
+                  }}
                   bindtap={() =>
                     handleImageTap(
                       image.url,
@@ -840,10 +944,11 @@ export function ImageSelector() {
                     placeholder="Loading..."
                     mode="aspectFill"
                     style={{
-                      width: '100%',
                       height: '100%',
+                      width: '100%',
                       opacity: isSelected ? 0.7 : 1,
                       transition: 'opacity 0.2s ease',
+                      borderRadius: '8px',
                     }}
                   />
 
@@ -976,6 +1081,7 @@ export function ImageSelector() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        borderRadius: '8px',
                       }}
                     >
                       <view
@@ -1034,10 +1140,32 @@ export function ImageSelector() {
                       </text>
                     </view>
                   )}
-                </view>
+                </list-item>
               );
             })}
-          </view>
+
+            {/* Loading More Indicator */}
+            {loadingMore && (
+              <list-item
+                key="loading-more"
+                item-key="loading-more"
+                full-span={true}
+                style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                }}
+              >
+                <text
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '14px',
+                  }}
+                >
+                  Loading more images...
+                </text>
+              </list-item>
+            )}
+          </list>
         ) : (
           <view
             style={{
@@ -1064,7 +1192,7 @@ export function ImageSelector() {
             </text>
           </view>
         )}
-      </scroll-view>
+      </view>
     </view>
   );
 }

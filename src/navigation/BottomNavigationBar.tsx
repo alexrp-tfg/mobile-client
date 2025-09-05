@@ -1,4 +1,4 @@
-import { useCallback } from '@lynx-js/react';
+import { useCallback, useMemo } from '@lynx-js/react';
 import { useLocation, useNavigate } from 'react-router';
 import { getActiveNavigationItems } from './navigation-config.js';
 
@@ -6,13 +6,16 @@ export function BottomNavigationBar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const activeItems = getActiveNavigationItems(location.pathname);
+  const activeItems = useMemo(
+    () => getActiveNavigationItems(location.pathname),
+    [location.pathname],
+  );
 
   const handleNavigation = useCallback(
     (route: string) => {
-      navigate(route, { replace: true });
+      navigate(route);
     },
-    [navigate],
+    [],
   );
 
   return (

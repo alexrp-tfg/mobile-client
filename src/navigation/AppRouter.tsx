@@ -1,4 +1,5 @@
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
+import { useMemo } from '@lynx-js/react';
 import { ImageGallery } from '../modules/gallery/presentation/ImageGallery.js';
 import { ImageUpload } from '../modules/media/presentation/ImageUpload.js';
 import { OnlineGallery } from '../modules/media/presentation/OnlineGallery.js';
@@ -10,66 +11,76 @@ import { BackButtonHandler } from './back-button-handler.js';
 import { SafeAreaView } from './safe-area.js';
 import { BottomNavigationBar } from './BottomNavigationBar.js';
 
+function AppContent() {
+  const location = useLocation();
+  const showBottomNav = useMemo(
+    () => !['/login', '/upload'].includes(location.pathname),
+    [location.pathname],
+  );
+
+  return (
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <ImageGallery />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <AuthGuard>
+              <LoginPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/gallery"
+          element={
+            <ProtectedRoute>
+              <ImageGallery />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/online-gallery"
+          element={
+            <ProtectedRoute>
+              <OnlineGallery />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute>
+              <ImageUpload />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      {showBottomNav && <BottomNavigationBar />}
+    </>
+  );
+}
+
 export function AppRouter() {
-  console.log('Rendering AppRouter');
   return (
     <MemoryRouter>
       <BackButtonHandler />
       <SafeAreaView>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <ImageGallery />
-                <BottomNavigationBar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <AuthGuard>
-                <LoginPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/gallery"
-            element={
-              <ProtectedRoute>
-                <ImageGallery />
-                <BottomNavigationBar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/online-gallery"
-            element={
-              <ProtectedRoute>
-                <OnlineGallery />
-                <BottomNavigationBar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <SettingsPage />
-                <BottomNavigationBar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/upload"
-            element={
-              <ProtectedRoute>
-                <ImageUpload />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <AppContent />
       </SafeAreaView>
     </MemoryRouter>
   );

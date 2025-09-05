@@ -7,17 +7,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  console.log('Rendering ProtectedRoute');
   const { isAuthenticated, isInitialized } = useAuth();
   const navigate = useNavigate();
   const hasNavigated = useRef(false);
 
   useEffect(() => {
-    console.log('ProtectedRoute useEffect:', {
-      isInitialized,
-      isAuthenticated,
-      hasNavigated: hasNavigated.current,
-    });
     if (isInitialized && !isAuthenticated && !hasNavigated.current) {
       console.log('Attempting to navigate to /login');
       hasNavigated.current = true;

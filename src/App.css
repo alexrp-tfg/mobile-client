@@ -124,22 +124,18 @@ text {
   }
 }
 
-.gallery-grid {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 12px;
+/* List container for gallery */
+.gallery-list {
+  background-color: transparent;
 }
 
 .gallery-item {
-  width: calc(50% - 4px);
-  aspect-ratio: 1;
   position: relative;
   border-radius: 12px;
   overflow: hidden;
   background-color: rgba(255, 255, 255, 0.05);
   transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .gallery-item--selected {

@@ -4,4 +4,5 @@ import type { Gallery, GalleryImage } from './entities.js';
 export interface IGalleryRepository {
   getLocalImages(limit?: number, offset?: number): Promise<Gallery>;
   getImageById(id: string): Promise<GalleryImage | null>;
+  getTotalImageCount(): Promise<number>;
 }
