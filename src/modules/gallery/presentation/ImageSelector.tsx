@@ -6,6 +6,7 @@ import { RefreshButton } from '../../shared/presentation/RefreshButton.js';
 import { StatusMessage } from '../../shared/presentation/StatusMessage.js';
 import { ServerStatus } from '../../shared/presentation/ServerStatus.js';
 import { useStatusMessage } from '../../shared/presentation/useStatusMessage.js';
+import { ImageUpload } from '../../media/presentation/ImageUpload.js';
 import type { Gallery } from '../domain/entities.js';
 import type { GalleryImageWithUploadStatus } from '../application/use-cases/GetUploadedFilesStatusUseCase.js';
 import type { UploadImageUseCase } from '../../media/application/use-cases/UploadImageUseCase.js';
@@ -38,6 +39,11 @@ export function ImageSelector() {
   const [autoUploading, setAutoUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
   const [serverUrl, setServerUrl] = useState<string>('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedImageForUpload, setSelectedImageForUpload] = useState<{
+    imageUrl: string;
+    fileName?: string;
+  } | null>(null);
   const {
     message: uploadMessage,
     showMessage: setUploadMessage,
@@ -407,7 +413,9 @@ export function ImageSelector() {
       uploadedImageId?: string,
     ) => {
       if (!selectionMode) {
-        nav('/upload', { state: { imageUrl, fileName } });
+        // Show upload modal instead of navigating
+        setSelectedImageForUpload({ imageUrl, fileName });
+        setShowUploadModal(true);
       } else {
         // In selection mode, check what type of images are selected
         console.log(
@@ -469,7 +477,7 @@ export function ImageSelector() {
         }
       }
     },
-    [nav, selectionMode, selectedImages, toggleImageSelection],
+    [selectionMode, selectedImages, toggleImageSelection],
   );
 
   const handleImageLongPress = useCallback(
@@ -700,6 +708,19 @@ export function ImageSelector() {
     setSelectionMode(false);
     clearUploadMessage();
   }, [clearUploadMessage]);
+
+  const handleCloseUploadModal = useCallback(() => {
+    setShowUploadModal(false);
+    setSelectedImageForUpload(null);
+    // Refresh server state to get any upload status changes
+    refreshServerState();
+  }, [refreshServerState]);
+
+  const handleNavigateToOnlineGallery = useCallback(() => {
+    setShowUploadModal(false);
+    setSelectedImageForUpload(null);
+    nav('/online-gallery');
+  }, [nav]);
 
   const images =
     imagesWithUploadStatus.length > 0
@@ -1193,6 +1214,31 @@ export function ImageSelector() {
           </view>
         )}
       </view>
+
+      {/* Upload Modal */}
+      {showUploadModal && selectedImageForUpload && (
+        <view
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <ImageUpload
+            imageUrl={selectedImageForUpload.imageUrl}
+            fileName={selectedImageForUpload.fileName}
+            onClose={handleCloseUploadModal}
+            onNavigateToOnlineGallery={handleNavigateToOnlineGallery}
+            isModal={true}
+          />
+        </view>
+      )}
     </view>
   );
 }

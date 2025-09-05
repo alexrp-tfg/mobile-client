@@ -6,7 +6,22 @@ import { LoadingSpinner } from '../../shared/presentation/LoadingSpinner.js';
 import { LoadingButton } from '../../shared/presentation/LoadingButton.js';
 import './ImageUpload.css';
 
-export function ImageUpload() {
+interface ImageUploadProps {
+  // Modal mode props
+  imageUrl?: string;
+  fileName?: string;
+  onClose?: () => void;
+  onNavigateToOnlineGallery?: () => void;
+  isModal?: boolean;
+}
+
+export function ImageUpload({
+  imageUrl: propImageUrl,
+  fileName: propFileName,
+  onClose,
+  onNavigateToOnlineGallery,
+  isModal = false,
+}: ImageUploadProps = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -20,8 +35,10 @@ export function ImageUpload() {
   const uploadImageUseCase = diContainer.getUploadImageUseCase();
   const getUserAllImagesUseCase = diContainer.getGetUserAllImagesUseCase();
   const deleteImageUseCase = diContainer.getDeleteImageUseCase();
-  const imageUrl = location.state?.imageUrl;
-  const fileName = location.state?.fileName;
+
+  // Use props if in modal mode, otherwise use location state
+  const imageUrl = isModal ? propImageUrl : location.state?.imageUrl;
+  const fileName = isModal ? propFileName : location.state?.fileName;
 
   // Check if image is already uploaded
   useEffect(() => {
@@ -143,11 +160,19 @@ export function ImageUpload() {
   };
 
   const handleViewOnlineGallery = () => {
-    navigate('/online-gallery');
+    if (isModal && onNavigateToOnlineGallery) {
+      onNavigateToOnlineGallery();
+    } else {
+      navigate('/online-gallery');
+    }
   };
 
   const handleBackToGallery = () => {
-    navigate(-1);
+    if (isModal && onClose) {
+      onClose();
+    } else {
+      navigate(-1);
+    }
   };
 
   if (!imageUrl) {
@@ -155,12 +180,21 @@ export function ImageUpload() {
       <view className="image-upload-container">
         <view className="image-upload-header">
           <text className="image-upload-title">Upload Image</text>
-          <view
-            className="image-upload-nav-button"
-            bindtap={handleBackToGallery}
-          >
-            <text>← Back to Gallery</text>
-          </view>
+          {isModal ? (
+            <view
+              className="image-upload-nav-button"
+              bindtap={handleBackToGallery}
+            >
+              <text>✕ Close</text>
+            </view>
+          ) : (
+            <view
+              className="image-upload-nav-button"
+              bindtap={handleBackToGallery}
+            >
+              <text>← Back to Gallery</text>
+            </view>
+          )}
         </view>
         <view className="image-upload-empty">
           <text>No image selected for upload</text>
@@ -182,9 +216,21 @@ export function ImageUpload() {
     <view className="image-upload-container">
       <view className="image-upload-header">
         <text className="image-upload-title">Upload Image</text>
-        <view className="image-upload-nav-button" bindtap={handleBackToGallery}>
-          <text>← Back to Gallery</text>
-        </view>
+        {isModal ? (
+          <view
+            className="image-upload-nav-button"
+            bindtap={handleBackToGallery}
+          >
+            <text>✕ Close</text>
+          </view>
+        ) : (
+          <view
+            className="image-upload-nav-button"
+            bindtap={handleBackToGallery}
+          >
+            <text>← Back to Gallery</text>
+          </view>
+        )}
       </view>
 
       <view className="image-upload-content">
@@ -207,7 +253,7 @@ export function ImageUpload() {
                   ? 'Checking upload status...'
                   : 'Uploading to server...'
               }
-              color="#007bff"
+              color="#3b82f6"
             />
           )}
         </view>
@@ -242,7 +288,7 @@ export function ImageUpload() {
                   className="image-upload-button secondary"
                   bindtap={handleBackToGallery}
                 >
-                  <text>Back to Gallery</text>
+                  <text>{isModal ? 'Close' : 'Back to Gallery'}</text>
                 </view>
               </view>
             </view>
@@ -261,7 +307,7 @@ export function ImageUpload() {
                   className="image-upload-button secondary"
                   bindtap={handleBackToGallery}
                 >
-                  <text>Upload Another</text>
+                  <text>{isModal ? 'Upload Another' : 'Upload Another'}</text>
                 </view>
                 <view
                   className="image-upload-button primary"
