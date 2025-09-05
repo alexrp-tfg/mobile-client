@@ -911,7 +911,7 @@ export function ImageSelector() {
         {images.length > 0 ? (
           <list
             className="gallery-list"
-            list-type="waterfall"
+            list-type="flow"
             span-count={2}
             scroll-orientation="vertical"
             enable-scroll={true}
@@ -937,7 +937,7 @@ export function ImageSelector() {
                   item-key={image.id}
                   className={`gallery-item ${isSelected ? 'gallery-item--selected' : 'gallery-item--normal'}`}
                   style={{
-                    height: '200px',
+                    height: '250px',
                     width: '100%',
                   }}
                   bindtap={() =>

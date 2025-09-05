@@ -232,10 +232,10 @@ export function OnlineGallery() {
       style={{
         width: '100%',
         height: '100%',
-        paddingBottom: '64px',
         backgroundColor: '#000',
         position: 'relative',
-        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Status Message */}
@@ -431,7 +431,7 @@ export function OnlineGallery() {
               <list-item
                 style={{
                   width: '100%',
-                  height: '200px',
+                  height: '250px',
                 }}
                 key={image.id}
                 item-key={image.id}
