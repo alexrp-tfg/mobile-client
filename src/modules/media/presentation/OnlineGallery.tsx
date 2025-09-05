@@ -232,9 +232,10 @@ export function OnlineGallery() {
       style={{
         width: '100%',
         height: '100%',
-        paddingBottom: '32px',
+        paddingBottom: '64px',
         backgroundColor: '#000',
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
       {/* Status Message */}

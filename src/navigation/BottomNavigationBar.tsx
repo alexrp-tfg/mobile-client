@@ -21,10 +21,6 @@ export function BottomNavigationBar() {
   return (
     <view
       style={{
-        position: 'fixed',
-        bottom: '0',
-        left: '0',
-        right: '0',
         height: '80px',
         backgroundColor: 'rgba(0, 0, 0, 0.95)',
         backdropFilter: 'blur(20px)',

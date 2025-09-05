@@ -734,7 +734,6 @@ export function ImageSelector() {
         height: '100%',
         backgroundColor: '#000',
         position: 'relative',
-        paddingBottom: '32px', // Space for bottom nav bar
       }}
     >
       {/* Status Message */}

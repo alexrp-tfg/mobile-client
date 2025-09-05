@@ -56,9 +56,7 @@ function AppContent() {
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
               <SettingsPage />
-            </ProtectedRoute>
           }
         />
         <Route

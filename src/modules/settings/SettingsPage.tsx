@@ -180,7 +180,6 @@ export function SettingsPage() {
         height: '100%',
         backgroundColor: '#000',
         position: 'relative',
-        paddingBottom: '80px', // Account for bottom navigation
       }}
     >
       {/* Status Message */}
@@ -592,23 +591,6 @@ export function SettingsPage() {
           </text>
 
           <LogoutButton text="Logout" variant="danger" redirectTo="/login" />
-        </view>
-
-        {/* Footer */}
-        <view
-          style={{
-            padding: '40px 20px 20px',
-            textAlign: 'center',
-          }}
-        >
-          <text
-            style={{
-              fontSize: '12px',
-              color: 'rgba(255, 255, 255, 0.4)',
-            }}
-          >
-            Lynx Gallery Settings
-          </text>
         </view>
       </scroll-view>
     </view>
