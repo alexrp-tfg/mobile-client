@@ -114,3 +114,36 @@ text {
   margin: 5px;
   color: rgba(255, 255, 255, 0.65);
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* List container for gallery */
+.gallery-list {
+  background-color: transparent;
+}
+
+.gallery-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gallery-item--selected {
+  border: 3px solid rgba(59, 130, 246, 0.8);
+  transform: scale(0.95);
+}
+
+.gallery-item--normal {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: scale(1);
+}

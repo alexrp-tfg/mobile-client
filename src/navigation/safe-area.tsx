@@ -9,7 +9,7 @@ export const SafeAreaView = ({ children }: SafeAreaViewProps) => {
     <view
       style={{
         paddingTop: `${(lynx.__globalProps as GlobalProps)?.['safeAreaTop'] ?? 0}px`,
-        paddingBottom: `${(lynx.__globalProps as GlobalProps)?.['safeAreaBottom'] ?? 0}px`,
+        paddingBottom: `${((lynx.__globalProps as GlobalProps)?.['safeAreaBottom'] ?? 0) + 20}px`,
         paddingLeft: `${(lynx.__globalProps as GlobalProps)?.['safeAreaLeft'] ?? 0}px`,
         paddingRight: `${(lynx.__globalProps as GlobalProps)?.['safeAreaRight'] ?? 0}px`,
         width: '100%',

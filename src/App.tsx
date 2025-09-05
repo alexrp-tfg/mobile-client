@@ -1,66 +1,83 @@
-import { useCallback, useEffect, useState } from '@lynx-js/react';
-
+import { AppRouter } from './navigation/AppRouter.js';
+import { useDatabaseInitialization } from './hooks/useDatabaseInitialization.js';
+import { useServerInitialization } from './hooks/useServerInitialization.js';
+import { ServerSetup } from './modules/shared/presentation/ServerSetup.js';
 import './App.css';
-import { useNavigate } from 'react-router';
 
 export function App() {
-  const [alterLogo, setAlterLogo] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
-  const nav = useNavigate();
+  const { isInitialized, error } = useDatabaseInitialization();
+  const {
+    isServerConfigured,
+    isChecking: isCheckingServer,
+    error: serverError,
+    setServerConfigured,
+  } = useServerInitialization();
 
-  useEffect(() => {
-    const images = NativeModules.NativeLocalStorageModule.getImages();
-    const splicedImages = images.splice(0, 5);
-    console.log(JSON.stringify(splicedImages, null, 2));
-    setImages(splicedImages);
-  }, [lynx]);
-
-  const onTap = useCallback(
-    (imageUrl: string) => {
-      'background only';
-      setAlterLogo(!alterLogo);
-      nav('/test', { state: { imageUrl } });
-    },
-    [alterLogo],
-  );
-
-  return (
-    <>
-      <view className="App">
-        <list
-          list-type="flow"
-          column-count={2}
-          scroll-orientation="vertical"
-          style={{ width: '100%', height: '100%' }}
-        >
-          <list-item item-key="start">
-            <text className="Title" bindtap={() => setAlterLogo(!alterLogo)}>
-              Images from device:
-            </text>
-          </list-item>
-          {images.length > 0 &&
-            images.map((image, index) => (
-              <list-item
-                item-key={'image-' + index}
-                key={'image-' + index}
-                style={{ width: '100%', border: '1px solid white' }}
-              >
-                <image
-                  src={image}
-                  bindtap={() => onTap(image)}
-                  placeholder="Loading image..."
-                  auto-size={true}
-                  mode="aspectFill"
-                />
-              </list-item>
-            ))}
-          <list-item item-key="end">
-            <text className="Title" item-key="end">
-              End of the images
-            </text>
-          </list-item>
-        </list>
+  // Show loading state while database or server initializes
+  if ((!isInitialized && !error) || isCheckingServer) {
+    return (
+      <view
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
+        <text>Initializing app...</text>
       </view>
-    </>
-  );
+    );
+  }
+
+  // Show error state if database initialization fails
+  if (error) {
+    return (
+      <view
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          padding: '20px',
+        }}
+      >
+        <text style={{ color: 'red', textAlign: 'center' }}>
+          Database initialization failed: {error}
+        </text>
+      </view>
+    );
+  }
+
+  // Show error state if server configuration check fails
+  if (serverError) {
+    return (
+      <view
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          padding: '20px',
+        }}
+      >
+        <text style={{ color: 'red', textAlign: 'center' }}>
+          Server configuration error: {serverError}
+        </text>
+      </view>
+    );
+  }
+
+  // Show server setup if not configured
+  if (!isServerConfigured) {
+    return (
+      <ServerSetup
+        onServerConfigured={() => {
+          setServerConfigured();
+        }}
+      />
+    );
+  }
+
+  // App is ready, show the router
+  return <AppRouter />;
 }

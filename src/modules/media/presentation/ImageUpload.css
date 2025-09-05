@@ -1,0 +1,231 @@
+.image-upload-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: #000;
+}
+
+.image-upload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.image-upload-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.image-upload-nav-button {
+  padding: 8px 16px;
+  background-color: rgba(107, 114, 128, 0.9);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.image-upload-nav-button:hover {
+  background-color: rgba(107, 114, 128, 1);
+}
+
+.image-upload-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.image-upload-preview {
+  flex: 1;
+  min-height: 300px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.image-upload-image {
+  width: 100%;
+  height: 100%;
+}
+
+.image-upload-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+}
+
+.image-upload-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.image-upload-button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.image-upload-button:not(.secondary):not(.primary) {
+  background-color: #3b82f6;
+  color: #fff;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.image-upload-button:not(.secondary):not(.primary):hover {
+  background-color: #2563eb;
+}
+
+.image-upload-button.primary {
+  background-color: rgba(34, 197, 94, 0.9);
+  color: #fff;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.image-upload-button.primary:hover {
+  background-color: rgba(34, 197, 94, 1);
+}
+
+.image-upload-button.secondary {
+  background-color: rgba(107, 114, 128, 0.9);
+  color: #fff;
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.image-upload-button.secondary:hover {
+  background-color: rgba(107, 114, 128, 1);
+}
+
+.image-upload-button.loading {
+  background-color: rgba(59, 130, 246, 0.9);
+  color: #fff;
+  cursor: not-allowed;
+  opacity: 0.8;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.image-upload-actions-row {
+  display: flex;
+  gap: 12px;
+}
+
+.image-upload-actions-row .image-upload-button {
+  flex: 1;
+}
+
+.image-upload-success {
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.image-upload-success-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #22c55e;
+  margin-bottom: 8px;
+}
+
+.image-upload-success-subtitle {
+  font-size: 14px;
+  color: rgba(34, 197, 94, 0.8);
+  margin-bottom: 16px;
+}
+
+.image-upload-error {
+  background-color: rgba(220, 38, 127, 0.1);
+  border: 1px solid rgba(220, 38, 127, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.image-upload-error-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #dc267f;
+  margin-bottom: 8px;
+}
+
+.image-upload-error-message {
+  font-size: 14px;
+  color: rgba(220, 38, 127, 0.8);
+  margin-bottom: 16px;
+}
+
+.image-upload-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.image-upload-empty-subtitle {
+  font-size: 14px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.image-upload-already-uploaded {
+  background-color: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.image-upload-already-uploaded .image-upload-error-title {
+  color: #fbbf24;
+}
+
+.image-upload-already-uploaded .image-upload-error-message {
+  color: rgba(251, 191, 36, 0.8);
+}

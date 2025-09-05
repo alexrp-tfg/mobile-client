@@ -10,14 +10,14 @@
     "preview": "rspeedy preview"
   },
   "dependencies": {
-    "@lynx-js/react": "0.111.2",
+    "@lynx-js/react": "0.112.3",
     "react-router": "6"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@lynx-js/qrcode-rsbuild-plugin": "0.4.0",
-    "@lynx-js/react-rsbuild-plugin": "0.10.8",
-    "@lynx-js/rspeedy": "0.10.2",
+    "@lynx-js/react-rsbuild-plugin": "0.10.12",
+    "@lynx-js/rspeedy": "0.10.7",
     "@lynx-js/tailwind-preset": "^0.2.0",
     "@lynx-js/types": "3.3.0",
     "@types/react": "^18.3.21",
@@ -25,7 +25,7 @@
     "globals": "^16.3.0",
     "jiti": "^2.5.1",
     "prettier": "^3.5.3",
-    "rsbuild-plugin-tailwindcss": "^0.2.3",
+    "rsbuild-plugin-tailwindcss": "0.2.3",
     "tailwindcss": "^3",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.0"
